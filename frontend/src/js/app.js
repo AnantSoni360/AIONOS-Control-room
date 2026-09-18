@@ -149,11 +149,18 @@ function renderSidebar() {
 function renderDashboard() {
   $("main-content").innerHTML = `
     <div class="page">
-      <div class="page-header">
-        <h1>Operations Control Room</h1>
-        <p>Real-time multi-department monitoring · Phase 4 · Supervisor Orchestration enabled</p>
+      <div style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: var(--radius-xl); padding: 40px; color: white; margin-bottom: 32px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(234, 88, 12, 0.2);">
+        <div style="position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+          <h1 style="font-family: var(--font-display); font-size: 2.5rem; letter-spacing: -0.04em; margin-bottom: 8px;">Operations Control Room</h1>
+          <p style="font-size: 1.05rem; opacity: 0.9; max-width: 600px;">Real-time multi-department monitoring powered by AIONOS Agentic AI.</p>
+        </div>
       </div>
-      <div id="dashboard-content"><div class="flex items-center gap-3" style="color:var(--text-muted);padding:40px 0"><div class="spinner"></div>Loading…</div></div>
+      <div id="dashboard-content">
+        <div class="flex items-center gap-3" style="color:var(--text-muted);padding:40px 0; justify-content: center;">
+          <div class="spinner"></div>Loading insights…
+        </div>
+      </div>
     </div>`;
 }
 
@@ -162,88 +169,89 @@ function renderDashboardContent() {
   const s = state.summary; if (!s) return;
   const overall = s.overall || {};
   const depts = ["Finance","HR","Sales","Operations"];
-  const deptColors = { Finance:"#818cf8", HR:"#f472b6", Sales:"#34d399", Operations:"#fbbf24" };
+  const deptColors = { Finance:"#8b5cf6", HR:"#ec4899", Sales:"#10b981", Operations:"#ea580c" };
   const deptIcons  = { Finance:"💰", HR:"👥", Sales:"📈", Operations:"⚙️" };
 
   c.innerHTML = `
     <!-- Summary bar -->
-    <div class="card" style="padding:20px 28px;margin-bottom:24px;display:flex;gap:32px;flex-wrap:wrap;align-items:center">
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;font-weight:600">Total Alerts</div>
-        <div style="font-size:2rem;font-weight:800;letter-spacing:-0.03em">${overall.total??0}</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px;">
+      <div class="card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-bottom: 4px solid #94a3b8; padding: 24px;">
+        <div style="font-family: var(--font-heading); font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Total Alerts</div>
+        <div style="font-family: var(--font-display); font-size: 3rem; font-weight: 800; color: #0f172a; line-height: 1;">${overall.total??0}</div>
       </div>
-      ${[["Open",overall.open,"#6366f1"],["In Progress",overall.in_progress,"#3b82f6"],["Pending Approval",overall.pending_approval,"#f97316"],["Resolved",overall.resolved,"#22c55e"],["Critical",overall.critical,"#f43f5e"]]
-        .map(([l,v,col]) => `<div style="border-left:1px solid var(--border);padding-left:24px">
-          <div style="font-size:0.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;font-weight:600">${l}</div>
-          <div style="font-size:1.5rem;font-weight:700;color:${col}">${v??0}</div></div>`).join("")}
+      ${[["Open",overall.open,"#ea580c"],["In Progress",overall.in_progress,"#3b82f6"],["Pending Approval",overall.pending_approval,"#eab308"],["Resolved",overall.resolved,"#10b981"],["Critical",overall.critical,"#ef4444"]]
+        .map(([l,v,col]) => `
+        <div class="card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-bottom: 4px solid ${col}; padding: 24px;">
+          <div style="font-family: var(--font-heading); font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">${l}</div>
+          <div style="font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: ${col}; line-height: 1;">${v??0}</div>
+        </div>`).join("")}
     </div>
+
     <!-- KPI Grid -->
-    <div class="kpi-grid" style="margin-bottom:24px">
+    <h2 style="font-family: var(--font-heading); font-size: 1.4rem; color: #0f172a; margin-bottom: 16px;">Department Overview</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 32px;">
       ${depts.map(d => {
         const ds = s[d]||{}, col = deptColors[d];
-        return `<div class="card kpi-card glow" style="--kpi-color:${col};cursor:pointer" onclick="window.navigate('alerts');window.setDeptFilter('${d}')">
-          <div style="display:flex;align-items:center;justify-content:space-between"><div class="kpi-label">${deptIcons[d]} ${d}</div><div class="dept-dot dept-${d}"></div></div>
-          <div class="kpi-value" style="color:${col}">${ds.total??0}</div>
-          <div class="kpi-sub">
-            <div class="kpi-sub-item"><div class="kpi-dot" style="background:#6366f1"></div>${ds.open??0} open</div>
-            <div class="kpi-sub-item"><div class="kpi-dot" style="background:#f43f5e"></div>${ds.critical??0} critical</div>
-            <div class="kpi-sub-item"><div class="kpi-dot" style="background:#22c55e"></div>${ds.resolved??0} resolved</div>
-          </div></div>`;
+        return `
+        <div class="card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;" onclick="window.navigate('alerts');window.setDeptFilter('${d}')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 32px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-card)'">
+          <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${col};"></div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: ${col}15; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">${deptIcons[d]}</div>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: #0f172a;">${d}</div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary);">Department AI Agent</div>
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px;">
+            <div style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; color: ${col}; line-height: 1;">${ds.total??0}</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; text-transform: uppercase;">Total</div>
+          </div>
+
+          <div style="display: flex; gap: 16px; font-size: 0.85rem; font-weight: 500;">
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width:8px;height:8px;border-radius:50%;background:#ea580c"></div>${ds.open??0} Open</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div>${ds.critical??0} Critical</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><div style="width:8px;height:8px;border-radius:50%;background:#10b981"></div>${ds.resolved??0} Resolved</div>
+          </div>
+        </div>`;
       }).join("")}
     </div>
+
     <!-- Supervisor History -->
-    <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px">
-      <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div style="font-weight:600;font-size:0.9rem">🔀 Orchestration History</div>
-        <button class="btn btn-ghost btn-sm" onclick="window.navigate('observatory')">Observatory</button>
+    <div class="card" style="padding:0; overflow:hidden; margin-bottom:24px; border: 1px solid var(--border);">
+      <div style="padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: #f8fafc;">
+        <div style="font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🔀</span> Orchestration History
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="window.navigate('observatory')" style="background: white; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05);">View Observatory</button>
       </div>
-      <div id="supervisor-history" style="padding:8px 6px">
-        <div class="flex items-center gap-3" style="padding:20px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div>
+      <div id="supervisor-history" style="padding: 8px;">
+        <div style="padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          <div class="spinner" style="margin: 0 auto 12px;"></div>Loading orchestration logs…
+        </div>
       </div>
     </div>
-    <!-- Recent Activity -->
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div style="font-weight:600;font-size:0.9rem">Recent Activity</div>
-        <button class="btn btn-ghost btn-sm" onclick="window.navigate('audit')">View all</button>
-      </div>
-      <div id="activity-feed" style="padding:8px 6px"><div class="flex items-center gap-3" style="padding:20px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div></div>
-    </div>`;
-
-  // Load supervisor history
+  `;
   api.getSupervisorHistory(5).then(res => {
-    const el = $("supervisor-history"); if (!el) return;
-    const history = res.history || [];
-    if (!history.length) {
-      el.innerHTML = `<div class="empty-state" style="padding:20px 0"><div class="empty-icon">🔀</div><p>No orchestration runs yet. Click <strong>🔀 Orchestrate</strong> on any Critical alert.</p></div>`;
-    } else {
-      el.innerHTML = `<div class="activity-list">${history.map(h => `
-        <div class="activity-item">
-          <div class="activity-dot" style="background:#8b5cf6"></div>
-          <div class="activity-content">
-            <div class="activity-action">SupervisorAgent · Alert #${h.alert_id}</div>
-            <div class="activity-meta">${(h.details||"").slice(0,100)}… · ${timeAgo(h.timestamp)}</div>
-          </div>
-        </div>`).join("")}</div>`;
+    const sh = $("supervisor-history"); if (!sh) return;
+    if (!res.history?.length) {
+      sh.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-muted);font-size:0.9rem">No recent orchestration runs.</div>';
+      return;
     }
-  }).catch(() => {
-    const el = $("supervisor-history");
-    if (el) el.innerHTML = `<div style="padding:16px 20px;font-size:0.8rem;color:var(--text-muted)">No history yet</div>`;
-  });
-
-  api.getAuditLogs({ limit:12 }).then(res => {
-    const feed = $("activity-feed"); if (!feed) return;
-    const logs = res.logs || [];
-    if (!logs.length) { feed.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No activity yet</p></div>`; return; }
-    feed.innerHTML = `<div class="activity-list">${logs.map(l => `
-      <div class="activity-item">
-        <div class="activity-dot" style="background:${l.agent_name==="SupervisorAgent"?"#8b5cf6":l.is_human_action?"#f97316":"#6366f1"}"></div>
-        <div class="activity-content">
-          <div class="activity-action">${l.agent_name} · <span style="color:var(--text-primary)">${l.action}</span></div>
-          <div class="activity-meta">${(l.details||"").slice(0,90)}${l.details?.length>90?"…":""} · ${timeAgo(l.timestamp)}</div>
+    sh.innerHTML = res.history.map(h => `
+      <div style="padding: 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'" onclick="window.navigate('observatory');setTimeout(()=>window.viewSupervisorTree('${h.run_id}'),100)">
+        <div>
+          <div style="font-family: var(--font-heading); font-weight: 600; font-size: 0.95rem; color: #0f172a; margin-bottom: 4px;">Run ${h.run_id.slice(0,8)} <span style="font-weight: 400; color: #64748b; font-size: 0.8rem; margin-left: 8px;">Alert #${h.alert_id}</span></div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 12px;">
+            <span><strong style="color: #475569;">Steps:</strong> ${h.total_steps}</span>
+            <span><strong style="color: #475569;">Duration:</strong> ${(h.duration_ms/1000).toFixed(1)}s</span>
+          </div>
         </div>
-      </div>`).join("")}</div>`;
-  }).catch(() => {});
+        <div style="font-size: 0.8rem; color: #94a3b8;">${new Date(h.created_at).toLocaleString()}</div>
+      </div>`).join("");
+  }).catch(() => {
+    const sh = $("supervisor-history"); if(sh) sh.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;font-size:0.85rem">Failed to load history</div>';
+  });
 }
 
 // ── Alerts ────────────────────────────────────────────────────────────────────
