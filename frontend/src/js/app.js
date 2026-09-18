@@ -750,9 +750,10 @@ function renderAudit() {
         </select>
         <button class="btn btn-ghost btn-sm" onclick="window.loadAuditLogs()">↻ Refresh</button>
       </div>
-      <div id="audit-list" style="display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding-bottom:8px">
-        <div class="flex items-center gap-3" style="padding:24px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div>
-      </div>
+      <div class="table-wrapper">
+        <table><thead><tr><th>Time</th><th>Agent</th><th>Action</th><th>Details</th><th>Alert</th><th>Type</th></tr></thead>
+        <tbody id="audit-tbody"><tr><td colspan="6"><div class="flex items-center gap-3" style="padding:24px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div></td></tr></tbody>
+        </table></div>
     </div>`;
   loadAuditLogs();
 }
@@ -765,25 +766,23 @@ async function loadAuditLogs() {
       limit: 100,
     });
     state.auditLogs = res.logs || [];
-    const tb = $("audit-list"); if (!tb) return;
+    const tb = $("audit-tbody"); if (!tb) return;
     if (!state.auditLogs.length) {
-      tb.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No entries found</p></div>`;
+      tb.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><p>No entries found</p></div></td></tr>`;
       return;
     }
     tb.innerHTML = state.auditLogs.map(l => {
       const isSup = l.agent_name === "SupervisorAgent";
-      return `
-      <div class="obs-list-item">
-        <div style="width:80px;flex-shrink:0;font-size:0.75rem;color:var(--text-muted)">${timeAgo(l.timestamp)}</div>
-        <div style="width:160px;flex-shrink:0;font-size:0.82rem;font-weight:600;color:var(--text-primary)">
-          ${isSup?"<span style='color:#8b5cf6'>🔀 Supervisor</span>":l.is_human_action?"👤 Human":l.agent_name||"—"}
-        </div>
-        <div style="width:120px;flex-shrink:0"><span class="badge" style="background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border)">${l.action}</span></div>
-        <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").replace(/\\n/g, " ")}</div>
-        <div style="flex-shrink:0;width:80px;text-align:right">
-          ${l.alert_id?`<button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${l.alert_id})">Alert #${l.alert_id}</button>`:"—"}
-        </div>
-      </div>`;
+      return `<tr>
+        <td style="white-space:nowrap;color:var(--text-secondary);font-size:0.78rem">${timeAgo(l.timestamp)}</td>
+        <td style="font-size:0.82rem;font-weight:500">${isSup?"🔀 ":""}${l.agent_name||"—"}</td>
+        <td><span class="tag">${l.action}</span></td>
+        <td style="max-width:320px;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").slice(0,100)}</td>
+        <td>${l.alert_id?`<button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${l.alert_id})">#${l.alert_id}</button>`:"—"}</td>
+        <td><span class="badge ${isSup?"":"badge-"+(l.is_human_action?"medium":"low")}" style="${isSup?"background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);":""}font-size:0.7rem">
+          ${isSup?"🔀 Supervisor":l.is_human_action?"👤 Human":"🤖 Agent"}
+        </span></td>
+      </tr>`;
     }).join("");
   } catch (e) { toast(e.message, "error"); }
 }
@@ -886,18 +885,17 @@ async function refreshObservatory() {
       if (!logs.length) {
         recentEl.innerHTML = `<div class="empty-state" style="padding:24px 0"><div class="empty-icon">📭</div><p>No agent activity yet</p></div>`;
       } else {
-        recentEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding-bottom:8px">` + logs.map(l => `
-          <div class="obs-list-item">
-            <div style="width:80px;flex-shrink:0;font-size:0.75rem;color:var(--text-muted)">${timeAgo(l.timestamp)}</div>
-            <div style="width:160px;flex-shrink:0;font-size:0.82rem;font-weight:600;color:var(--text-primary)">
-              ${l.agent_name==="SupervisorAgent"?"<span style='color:#8b5cf6'>🔀 Supervisor</span>":l.agent_name||"—"}
-            </div>
-            <div style="width:120px;flex-shrink:0"><span class="badge" style="background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border)">${l.action}</span></div>
-            <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").replace(/\\n/g, " ")}</div>
-            <div style="flex-shrink:0;width:80px;text-align:right">
-              ${l.alert_id?`<button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${l.alert_id})">Alert #${l.alert_id}</button>`:"—"}
-            </div>
-          </div>`).join("") + `</div>`;
+        recentEl.innerHTML = `<div class="table-wrapper"><table>
+          <thead><tr><th>Time</th><th>Agent</th><th>Action</th><th>Details</th><th>Alert</th></tr></thead>
+          <tbody>${logs.map(l => `
+            <tr>
+              <td style="white-space:nowrap;color:var(--text-secondary);font-size:0.78rem">${timeAgo(l.timestamp)}</td>
+              <td style="font-size:0.82rem;font-weight:500">${l.agent_name==="SupervisorAgent"?"🔀 ":""}${l.agent_name||"—"}</td>
+              <td><span class="tag">${l.action}</span></td>
+              <td style="max-width:300px;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").slice(0,100)}</td>
+              <td>${l.alert_id?`<button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${l.alert_id})">#${l.alert_id}</button>`:"—"}</td>
+            </tr>`).join("")}
+          </tbody></table></div>`;
       }
     }
   } catch (e) { console.warn("Observatory:", e); }

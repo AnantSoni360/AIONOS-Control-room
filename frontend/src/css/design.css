@@ -791,21 +791,3 @@ th { font-family: var(--font-heading); font-size: 0.8rem; letter-spacing: 0.05em
 }
 .obs-title { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
 .obs-subtitle { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
-
-/* For recent activity list */
-.obs-list-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  transition: all 0.2s var(--ease);
-  min-width: 650px;
-}
-.obs-list-item:hover {
-  background: var(--bg-input);
-  transform: translateX(4px);
-  border-color: var(--border-strong);
-}
