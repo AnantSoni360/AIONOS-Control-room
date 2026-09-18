@@ -132,7 +132,7 @@ function renderSidebar() {
     <div style="padding:14px 16px;border-top:1px solid var(--border)">
       ${(() => { const u = getUser(); return u ? `
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;flex-shrink:0">${u.email?.[0]?.toUpperCase()||'U'}</div>
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ea580c);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;flex-shrink:0">${u.email?.[0]?.toUpperCase()||'U'}</div>
           <div style="overflow:hidden;flex:1">
             <div style="font-size:0.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.email}</div>
             <div style="font-size:0.65rem;color:var(--text-muted)">Authenticated</div>

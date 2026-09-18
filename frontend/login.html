@@ -6,102 +6,105 @@
   <title>AIONOS — Sign In</title>
   <meta name="description" content="Sign in to AIONOS Operations Control Room" />
   <link rel="stylesheet" href="src/css/design.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><text y='.9em' font-size='70' x='12'>A</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ea580c'/><text y='.9em' font-size='70' x='12'>A</text></svg>" />
   <style>
-    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f8fafc; }
 
     body::before {
-      content: '';
-      position: fixed; inset: 0; pointer-events: none;
+      content: ''; position: fixed; inset: 0; pointer-events: none;
       background:
-        radial-gradient(ellipse 70% 60% at 20% 30%, rgba(99,102,241,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 70%, rgba(139,92,246,0.10) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 50% 10%, rgba(59,130,246,0.07) 0%, transparent 60%);
+        radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(234, 88, 12, 0.06), transparent 25%);
     }
 
     .login-wrapper {
       position: relative; z-index: 1;
-      width: 100%; max-width: 420px;
+      width: 100%; max-width: 440px;
       padding: 16px;
     }
 
     .login-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-xl);
       padding: 48px 40px;
-      backdrop-filter: blur(20px);
-      box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.05), 0 0 0 1px rgba(234,88,12,0.05);
     }
 
     .login-logo {
       display: flex; align-items: center; gap: 12px;
-      margin-bottom: 36px; justify-content: center;
+      margin-bottom: 32px; justify-content: center;
     }
     .login-logo-mark {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem; font-weight: 900; color: white;
-      box-shadow: 0 0 24px rgba(99,102,241,0.4);
+      font-size: 1.5rem; font-weight: 900; color: white;
+      box-shadow: 0 8px 24px rgba(234, 88, 12, 0.3);
     }
-    .login-logo-text {
-      font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em;
-    }
+    .login-logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; }
     .login-logo-text span {
-      display: block; font-size: 0.7rem; font-weight: 500;
-      color: var(--text-secondary); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px;
+      display: block; font-size: 0.75rem; font-weight: 600;
+      color: #ea580c; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px;
     }
 
     .login-title {
       text-align: center; margin-bottom: 8px;
-      font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em;
+      font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: #0f172a;
     }
     .login-subtitle {
       text-align: center; margin-bottom: 32px;
-      font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;
+      font-size: 0.85rem; color: #64748b; line-height: 1.5;
     }
 
-    .form-group { margin-bottom: 18px; }
+    .test-credentials {
+      background: #ffedd5; border: 1px dashed #fdba74;
+      border-radius: var(--radius-md); padding: 12px 16px;
+      margin-bottom: 24px; font-size: 0.8rem; color: #9a3412;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .test-credentials strong { color: #7c2d12; }
+
+    .form-group { margin-bottom: 20px; }
     .form-label {
-      display: block; font-size: 0.75rem; font-weight: 600;
-      color: var(--text-secondary); text-transform: uppercase;
-      letter-spacing: 0.06em; margin-bottom: 6px;
+      display: block; font-size: 0.75rem; font-weight: 700;
+      color: #475569; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 8px;
     }
 
     .login-btn {
-      width: 100%; padding: 12px;
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: white; border: none; border-radius: var(--radius-sm);
-      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white; border: none; border-radius: var(--radius-md);
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
       transition: all 0.2s; letter-spacing: 0.02em;
       margin-top: 8px;
-      box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+      box-shadow: 0 8px 24px rgba(234, 88, 12, 0.3);
     }
     .login-btn:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(99,102,241,0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(234, 88, 12, 0.4);
     }
-    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
     .login-error {
-      background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3);
-      border-radius: var(--radius-sm); padding: 10px 14px;
-      font-size: 0.82rem; color: #f43f5e; margin-bottom: 16px;
-      display: none;
+      background: #fee2e2; border: 1px solid #fca5a5;
+      border-radius: var(--radius-sm); padding: 12px 16px;
+      font-size: 0.85rem; color: #b91c1c; margin-bottom: 20px;
+      display: none; font-weight: 500;
     }
     .login-error.show { display: block; }
 
     .login-footer {
-      text-align: center; margin-top: 24px;
-      font-size: 0.72rem; color: var(--text-muted);
+      text-align: center; margin-top: 32px;
+      font-size: 0.75rem; color: #94a3b8; font-weight: 500;
     }
 
     .spinner-inline {
-      display: inline-block; width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
       border-top-color: white; border-radius: 50%;
-      animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px;
+      animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -117,20 +120,27 @@
       <h1 class="login-title">Welcome back</h1>
       <p class="login-subtitle">Sign in to monitor your AI agents and manage operational alerts across all departments.</p>
 
+      <!-- TEST CREDENTIALS BOX -->
+      <div class="test-credentials">
+        <div style="font-weight:700;margin-bottom:2px;text-transform:uppercase;font-size:0.7rem;letter-spacing:0.05em">Evaluation Credentials</div>
+        <div><strong>Email:</strong> anantsoni360@gmail.com</div>
+        <div><strong>Password:</strong> Anantsoni2005</div>
+      </div>
+
       <div class="login-error" id="login-error"></div>
 
       <form id="login-form" autocomplete="on">
         <div class="form-group">
-          <label class="form-label" for="email">Email</label>
+          <label class="form-label" for="email">Email address</label>
           <input class="input" type="email" id="email" name="email"
-            placeholder="you@company.com" autocomplete="email" required />
+            placeholder="anantsoni360@gmail.com" value="anantsoni360@gmail.com" autocomplete="email" required />
         </div>
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
           <input class="input" type="password" id="password" name="password"
-            placeholder="••••••••" autocomplete="current-password" required />
+            placeholder="••••••••" value="Anantsoni2005" autocomplete="current-password" required />
         </div>
-        <button class="login-btn" type="submit" id="login-btn">Sign In</button>
+        <button class="login-btn" type="submit" id="login-btn">Sign In to Dashboard</button>
       </form>
 
       <div class="login-footer">
@@ -188,10 +198,9 @@
         error.textContent = err.message || "Invalid credentials. Please try again.";
         error.classList.add("show");
         btn.disabled = false;
-        btn.textContent = "Sign In";
+        btn.textContent = "Sign In to Dashboard";
       }
     });
   </script>
 </body>
 </html>
-
