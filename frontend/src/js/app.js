@@ -281,13 +281,8 @@ function renderAlerts() {
         <button class="btn btn-ghost btn-sm" onclick="window.applyAlertFilters()">↻ Refresh</button>
         <span id="alert-count" style="margin-left:auto;font-size:0.8rem;color:var(--text-secondary)"></span>
       </div>
-      <div class="table-wrapper">
-        <table><thead><tr>
-          <th>Severity</th><th>Department</th><th>Title</th><th>Type</th><th>Status</th><th>Age</th><th>Actions</th>
-        </tr></thead>
-        <tbody id="alerts-tbody">
-          <tr><td colspan="7"><div class="flex items-center gap-3" style="padding:24px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div></td></tr>
-        </tbody></table>
+      <div id="alerts-grid" class="alerts-grid">
+        <div class="flex items-center gap-3" style="padding:24px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div>
       </div>
     </div>`;
   const df = state.alertFilters;
@@ -302,19 +297,19 @@ async function loadAlerts() {
     const res = await api.getAlerts({ ...state.alertFilters });
     state.alerts = res.alerts || [];
     state.alertTotal = res.total || 0;
-    renderAlertsTable();
+    renderAlertsGrid();
   } catch (e) {
-    const tb = $("alerts-tbody");
-    if (tb) tb.innerHTML = `<tr><td colspan="7" style="color:var(--critical);padding:20px">Error: ${e.message}</td></tr>`;
+    const tb = $("alerts-grid");
+    if (tb) tb.innerHTML = `<div style="color:var(--critical);padding:20px;grid-column:1/-1">Error: ${e.message}</div>`;
   }
 }
 
-function renderAlertsTable() {
-  const tb = $("alerts-tbody"), cnt = $("alert-count");
+function renderAlertsGrid() {
+  const tb = $("alerts-grid"), cnt = $("alert-count");
   if (cnt) cnt.textContent = `${state.alertTotal} alerts`;
   if (!tb) return;
   if (!state.alerts.length) {
-    tb.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🎉</div><p>No alerts match the filters</p></div></td></tr>`;
+    tb.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎉</div><p>No alerts match the filters</p></div>`;
     return;
   }
   tb.innerHTML = state.alerts.map(a => {
@@ -322,36 +317,47 @@ function renderAlertsTable() {
     const supervising = state.activeSupervisor?.alertId === a.id;
     const canRun = ["Open","In_Progress"].includes(a.status);
     const isCritical = a.severity === "Critical";
-    return `<tr id="alert-row-${a.id}">
-      <td><span class="badge badge-${severityClass(a.severity)}">${a.severity}</span></td>
-      <td><div class="flex items-center gap-2"><div class="dept-dot dept-${a.department}"></div><span style="font-weight:500">${a.department}</span></div></td>
-      <td style="max-width:260px">
-        <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.title}</div>
-        ${a.description?`<div style="font-size:0.75rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.description.slice(0,70)}…</div>`:""}
-      </td>
-      <td><span class="tag">${a.alert_type}</span></td>
-      <td><span class="badge status-${statusClass(a.status)}">${a.status.replace(/_/g," ")}</span></td>
-      <td style="color:var(--text-secondary);font-size:0.8rem">${timeAgo(a.created_at)}</td>
-      <td>
-        <div class="flex gap-2" style="flex-wrap:wrap">
+    return `
+    <div class="alert-card" id="alert-card-${a.id}">
+      <div class="alert-card-header">
+        <div class="flex items-center gap-2">
+          <span class="badge badge-${severityClass(a.severity)}">${a.severity}</span>
+          <span class="badge status-${statusClass(a.status)}">${a.status.replace(/_/g," ")}</span>
+        </div>
+        <span class="alert-card-age">${timeAgo(a.created_at)}</span>
+      </div>
+      
+      <div class="alert-card-body">
+        <h3 class="alert-title">${a.title}</h3>
+        ${a.description ? `<p class="alert-desc">${a.description}</p>` : ""}
+      </div>
+      
+      <div class="alert-card-meta flex gap-2">
+        <div class="flex items-center gap-1"><div class="dept-dot dept-${a.department}"></div><span style="font-weight:500">${a.department}</span></div>
+        <span style="color:var(--border);">|</span>
+        <span class="tag">${a.alert_type}</span>
+      </div>
+
+      <div class="alert-card-footer">
+        <div class="flex gap-2" style="width:100%">
           ${canRun && !supervising ? `
-            <button id="run-btn-${a.id}" class="btn ${streaming?"btn-warning":"btn-primary"} btn-sm"
+            <button id="run-btn-${a.id}" class="btn ${streaming?"btn-warning":"btn-primary"} btn-sm flex-1"
               onclick="window.runAgentStreaming(${a.id})" ${streaming?"disabled":""}>
               ${streaming?`<div class="spinner" style="width:12px;height:12px;border-width:2px"></div> Live…`:"▶ Run Agent"}
             </button>
             ${isCritical && !streaming ? `
-              <button id="orch-btn-${a.id}" class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none"
+              <button id="orch-btn-${a.id}" class="btn btn-sm flex-1" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none"
                 onclick="window.runSupervisor(${a.id})">
                 🔀 Orchestrate
               </button>` : ""}
           ` : supervising ? `
-            <button disabled class="btn btn-sm" style="background:rgba(139,92,246,0.2);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">
+            <button disabled class="btn btn-sm flex-1" style="background:rgba(139,92,246,0.2);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">
               <div class="spinner" style="width:12px;height:12px;border-width:2px"></div> Orchestrating…
             </button>` : ""}
-          <button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${a.id})">View</button>
+          <button class="btn btn-ghost btn-sm ${(!canRun && !supervising) ? 'flex-1' : ''}" onclick="window.openAlertDrawer(${a.id})">View Detail</button>
         </div>
-      </td>
-    </tr>`;
+      </div>
+    </div>`;
   }).join("");
 }
 
@@ -406,13 +412,13 @@ window.runSupervisor = function(alertId) {
     },
     (msg) => {
       state.activeSupervisor = null;
-      renderSidebar(); renderAlertsTable();
+      renderSidebar(); renderAlertsGrid();
       toast(`Orchestration error: ${msg}`, "error");
     }
   );
   // Store in activeStreams too for sidebar count
   state.activeStreams[`supervisor-${alertId}`] = es;
-  renderAlertsTable();
+  renderAlertsGrid();
   renderSidebar();
   toast(`Supervisor orchestrating Alert #${alertId}…`, "info");
 };
@@ -521,7 +527,7 @@ function finalizeStreamDrawer(alertId, event, startTime) {
   // Cleanup stream tracking
   delete state.activeStreams[alertId];
   delete state.activeStreams[`supervisor-${alertId}`];
-  renderAlertsTable();
+  renderAlertsGrid();
 }
 
 window.closeDrawer = function() {
