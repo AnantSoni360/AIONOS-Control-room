@@ -657,7 +657,7 @@ function renderApprovals() {
         </select>
         <button class="btn btn-ghost btn-sm" onclick="window.loadApprovals()">↻ Refresh</button>
       </div>
-      <div id="approvals-list"></div>
+      <div id="approvals-list" class="approvals-grid"></div>
     </div>`;
   loadApprovals();
 }
@@ -679,35 +679,45 @@ function renderApprovalsList() {
   c.innerHTML = state.approvals.map(ap => {
     const isSupervisor = ap.agent_name === "SupervisorAgent";
     return `
-    <div class="card" style="padding:22px;margin-bottom:14px${isSupervisor?";border-left:3px solid #8b5cf6":""}" id="approval-${ap.id}">
-      <div class="flex justify-between items-center" style="margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div class="flex items-center gap-3">
+    <div class="approval-card ${isSupervisor ? 'supervisor-card' : ''}" id="approval-${ap.id}">
+      <div class="approval-card-header">
+        <div class="flex items-center gap-2">
           <span class="badge badge-${ap.risk_level==="Critical"?"critical":"high"}">${ap.risk_level} Risk</span>
           <span style="font-weight:600;font-size:0.9rem">${isSupervisor?"🔀 ":""}${ap.agent_name}</span>
-          <span class="tag">Alert #${ap.alert_id}</span>
-          ${isSupervisor?`<span class="tag" style="background:rgba(139,92,246,0.15);color:#a78bfa;border-color:rgba(139,92,246,0.3)">Cross-Dept</span>`:""}
+          ${isSupervisor?`<span class="badge" style="background:rgba(139,92,246,0.15);color:#a78bfa;border-color:rgba(139,92,246,0.3)">Cross-Dept</span>`:""}
         </div>
-        <span style="font-size:0.75rem;color:var(--text-secondary)">${timeAgo(ap.created_at)}</span>
+        <span class="alert-card-age">${timeAgo(ap.created_at)}</span>
       </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:4px">Action Requested</div>
-        <div style="font-size:0.875rem;font-weight:500">${ap.action_requested}</div>
+      
+      <div class="approval-card-body">
+        <div class="approval-section-title">Action Requested</div>
+        <div class="approval-action-text">${ap.action_requested}</div>
+        
+        <div class="approval-section-title mt-4">Findings</div>
+        <div class="approval-findings-text">${ap.context_summary||"—"}</div>
+        
+        ${ap.policy_reference?`
+        <div class="approval-section-title mt-4">Policy Reference</div>
+        <div class="approval-policy-text">${ap.policy_reference}</div>`:""}
       </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:4px">Findings</div>
-        <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;background:var(--bg-glass);padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border)">${ap.context_summary||"—"}</div>
+
+      <div class="alert-card-meta mt-4 flex justify-between items-center">
+        <span class="badge" style="background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border)">Alert #${ap.alert_id}</span>
       </div>
-      ${ap.policy_reference?`<div style="margin-bottom:16px"><div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;margin-bottom:4px">Policy Reference</div>
-        <div style="font-size:0.78rem;color:var(--indigo);background:var(--indigo-dim);padding:8px 12px;border-radius:var(--radius-sm)">${ap.policy_reference}</div></div>`:""}
+
+      <div class="alert-card-footer">
       ${ap.status==="pending"?`
-        <div class="flex gap-3 items-center" style="flex-wrap:wrap">
-          <input class="input" id="reason-${ap.id}" placeholder="Optional reason…" style="flex:1;min-width:160px">
-          <button class="btn btn-success" onclick="window.submitDecision(${ap.id},'approved')">✓ Approve</button>
-          <button class="btn btn-danger"  onclick="window.submitDecision(${ap.id},'rejected')">✕ Reject</button>
+        <div class="flex gap-2 items-center" style="width:100%;flex-wrap:wrap;">
+          <input class="input" id="reason-${ap.id}" placeholder="Optional reason…" style="flex:1;min-width:140px;padding:8px 12px;font-size:0.8rem">
+          <div class="flex gap-2" style="flex:1">
+            <button class="btn btn-sm flex-1" style="background:#10b981;color:white;border:none" onclick="window.submitDecision(${ap.id},'approved')">✓ Approve</button>
+            <button class="btn btn-sm flex-1" style="background:#ef4444;color:white;border:none" onclick="window.submitDecision(${ap.id},'rejected')">✕ Reject</button>
+          </div>
         </div>`:`
-        <div class="badge ${ap.status==="approved"?"badge-low":"badge-critical"}" style="font-size:0.8rem;padding:5px 14px">
+        <div class="badge ${ap.status==="approved"?"badge-low":"badge-critical"}" style="font-size:0.8rem;padding:6px 14px;width:100%;justify-content:center">
           ${ap.status==="approved"?"✓ Approved":"✕ Rejected"}${ap.decided_at?` · ${timeAgo(ap.decided_at)}`:""}
         </div>`}
+      </div>
     </div>`;
   }).join("");
 }
