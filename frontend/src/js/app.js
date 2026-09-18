@@ -835,19 +835,21 @@ async function refreshObservatory() {
       if (!runs.length && !localStreams) {
         activeEl.innerHTML = `<div class="empty-state" style="padding:24px 0"><div class="empty-icon">💤</div><p>No agents running right now</p></div>`;
       } else {
-        activeEl.innerHTML = runs.map(r => `
-          <div class="card" style="padding:16px 20px;margin-bottom:10px;border-left:3px solid #22c55e">
-            <div class="flex items-center gap-3" style="flex-wrap:wrap">
-              <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 1s infinite;flex-shrink:0"></div>
-              <div><div style="font-weight:600;font-size:0.88rem">${r.title}</div>
-                <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px">${r.department} · ${r.alert_type} · started ${timeAgo(r.updated_at)}</div>
+        activeEl.innerHTML = `<div class="obs-grid">` + runs.map(r => `
+          <div class="obs-card active-run">
+            <div class="obs-card-header">
+              <div class="flex items-center gap-2">
+                <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 1s infinite;flex-shrink:0"></div>
+                <div class="obs-title">${r.title}</div>
               </div>
-              <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-                <span class="badge badge-${severityClass(r.severity)}" style="font-size:0.7rem">${r.severity}</span>
-                <button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${r.id})">View</button>
-              </div>
+              <span class="badge badge-${severityClass(r.severity)}" style="font-size:0.65rem">${r.severity}</span>
             </div>
-          </div>`).join("");
+            <div class="obs-subtitle">${r.department} · ${r.alert_type}</div>
+            <div class="flex justify-between items-center mt-4 pt-3" style="border-top:1px solid var(--border-light)">
+               <span style="font-size:0.75rem;color:var(--text-muted)">started ${timeAgo(r.updated_at)}</span>
+               <button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${r.id})">View Stream</button>
+            </div>
+          </div>`).join("") + `</div>`;
       }
     }
 
@@ -858,20 +860,21 @@ async function refreshObservatory() {
       if (!history.length) {
         supEl.innerHTML = `<div class="empty-state" style="padding:20px 0"><div class="empty-icon">🔀</div><p>No orchestration runs yet. Click <strong>🔀 Orchestrate</strong> on a Critical alert.</p></div>`;
       } else {
-        supEl.innerHTML = history.map(h => `
-          <div class="card" style="padding:14px 18px;margin-bottom:8px;border-left:3px solid #8b5cf6">
-            <div class="flex items-center gap-3">
-              <span style="font-size:0.85rem">🔀</span>
-              <div style="flex:1">
-                <div style="font-size:0.85rem;font-weight:600">Alert #${h.alert_id} · SupervisorAgent</div>
-                <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px">${(h.details||"").slice(0,100)}…</div>
+        supEl.innerHTML = `<div class="obs-grid">` + history.map(h => `
+          <div class="obs-card supervisor-run">
+            <div class="obs-card-header">
+              <div class="flex items-center gap-2">
+                <span style="font-size:1rem">🔀</span>
+                <div class="obs-title">Alert #${h.alert_id}</div>
               </div>
-              <div style="text-align:right">
-                <div style="font-size:0.72rem;color:var(--text-muted)">${timeAgo(h.timestamp)}</div>
-                <button class="btn btn-ghost btn-sm" style="margin-top:4px" onclick="window.showOrchTree('${h.run_id}')">View Tree</button>
-              </div>
+              <span style="font-size:0.72rem;color:var(--text-muted)">${timeAgo(h.timestamp)}</span>
             </div>
-          </div>`).join("");
+            <div class="obs-subtitle" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${h.details||"—"}</div>
+            <div class="flex justify-between items-center mt-4 pt-3" style="border-top:1px solid var(--border-light)">
+               <span class="badge" style="background:rgba(139,92,246,0.1);color:#8b5cf6;font-size:0.65rem">SupervisorAgent</span>
+               <button class="btn btn-ghost btn-sm" onclick="window.showOrchTree('${h.run_id}')">View Tree</button>
+            </div>
+          </div>`).join("") + `</div>`;
       }
     }
 
@@ -882,17 +885,18 @@ async function refreshObservatory() {
       if (!logs.length) {
         recentEl.innerHTML = `<div class="empty-state" style="padding:24px 0"><div class="empty-icon">📭</div><p>No agent activity yet</p></div>`;
       } else {
-        recentEl.innerHTML = `<div class="table-wrapper"><table>
-          <thead><tr><th>Time</th><th>Agent</th><th>Action</th><th>Details</th><th>Alert</th></tr></thead>
-          <tbody>${logs.map(l => `
-            <tr>
-              <td style="white-space:nowrap;color:var(--text-secondary);font-size:0.78rem">${timeAgo(l.timestamp)}</td>
-              <td style="font-size:0.82rem;font-weight:500">${l.agent_name==="SupervisorAgent"?"🔀 ":""}${l.agent_name||"—"}</td>
-              <td><span class="tag">${l.action}</span></td>
-              <td style="max-width:300px;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").slice(0,100)}</td>
-              <td>${l.alert_id?`<button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${l.alert_id})">#${l.alert_id}</button>`:"—"}</td>
-            </tr>`).join("")}
-          </tbody></table></div>`;
+        recentEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">` + logs.map(l => `
+          <div class="obs-list-item">
+            <div style="width:80px;flex-shrink:0;font-size:0.75rem;color:var(--text-muted)">${timeAgo(l.timestamp)}</div>
+            <div style="width:160px;flex-shrink:0;font-size:0.82rem;font-weight:600;color:var(--text-primary)">
+              ${l.agent_name==="SupervisorAgent"?"<span style='color:#8b5cf6'>🔀 Supervisor</span>":l.agent_name||"—"}
+            </div>
+            <div style="width:120px;flex-shrink:0"><span class="badge" style="background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border)">${l.action}</span></div>
+            <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").replace(/\\n/g, " ")}</div>
+            <div style="flex-shrink:0;width:80px;text-align:right">
+              ${l.alert_id?`<button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${l.alert_id})">Alert #${l.alert_id}</button>`:"—"}
+            </div>
+          </div>`).join("") + `</div>`;
       }
     }
   } catch (e) { console.warn("Observatory:", e); }
