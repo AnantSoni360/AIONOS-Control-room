@@ -750,7 +750,7 @@ function renderAudit() {
         </select>
         <button class="btn btn-ghost btn-sm" onclick="window.loadAuditLogs()">↻ Refresh</button>
       </div>
-      <div id="audit-list" style="display:flex;flex-direction:column;gap:8px">
+      <div id="audit-list" style="display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding-bottom:8px">
         <div class="flex items-center gap-3" style="padding:24px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div>
       </div>
     </div>`;
@@ -886,7 +886,7 @@ async function refreshObservatory() {
       if (!logs.length) {
         recentEl.innerHTML = `<div class="empty-state" style="padding:24px 0"><div class="empty-icon">📭</div><p>No agent activity yet</p></div>`;
       } else {
-        recentEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">` + logs.map(l => `
+        recentEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding-bottom:8px">` + logs.map(l => `
           <div class="obs-list-item">
             <div style="width:80px;flex-shrink:0;font-size:0.75rem;color:var(--text-muted)">${timeAgo(l.timestamp)}</div>
             <div style="width:160px;flex-shrink:0;font-size:0.82rem;font-weight:600;color:var(--text-primary)">

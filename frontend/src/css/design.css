@@ -802,6 +802,7 @@ th { font-family: var(--font-heading); font-size: 0.8rem; letter-spacing: 0.05em
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   transition: all 0.2s var(--ease);
+  min-width: 650px;
 }
 .obs-list-item:hover {
   background: var(--bg-input);
