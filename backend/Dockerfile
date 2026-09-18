@@ -21,11 +21,8 @@ COPY --from=deps /usr/local/bin /usr/local/bin
 # Copy application source
 COPY . .
 
-# Expose API port
+# Expose default port (Railway overrides with $PORT)
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD python -c "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Use shell form so $PORT env var is expanded at runtime
+CMD uvicorn main:app --host 0.0.0.0 --port $PORT
