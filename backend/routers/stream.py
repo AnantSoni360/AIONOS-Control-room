@@ -38,7 +38,7 @@ def _ping() -> str:
 
 # ---- Background agent runner ------------------------------------------------
 
-def _run_streaming(alert: dict, db: Client, event_q: queue.Queue) -> None:
+def _run_streaming(alert: dict, db: Client, event_q: queue.Queue, provider: str = "mistral") -> None:
     """
     Runs the department agent synchronously in a background thread.
     Pushes typed event dicts to event_q; puts None sentinel when done.
@@ -90,7 +90,7 @@ def _run_streaming(alert: dict, db: Client, event_q: queue.Queue) -> None:
             event_q.put({"type": "rag_ready", "chunks": policy_context.count("###")})
 
         # Build streaming graph
-        graph = create_agent_graph(tools, system_prompt, policy_context, event_queue=event_q)
+        graph = create_agent_graph(tools, system_prompt, policy_context, event_queue=event_q, provider=provider)
 
         user_prompt = (
             f"You have been triggered to investigate the following {dept} alert:\n\n"
@@ -154,15 +154,15 @@ def _run_streaming(alert: dict, db: Client, event_q: queue.Queue) -> None:
 
 # ---- Async SSE generator ----------------------------------------------------
 
-async def _event_generator(alert: dict, db: Client) -> AsyncGenerator[str, None]:
+async def _event_generator(alert: dict, db: Client, provider: str = "mistral") -> AsyncGenerator[str, None]:
     event_q: queue.Queue = queue.Queue()
 
     thread = threading.Thread(
-        target=_run_streaming, args=(alert, db, event_q), daemon=True
+        target=_run_streaming, args=(alert, db, event_q, provider), daemon=True
     )
     thread.start()
 
-    yield _sse({"type": "start", "alert_id": alert["id"], "department": alert["department"]})
+    yield _sse({"type": "start", "alert_id": alert["id"], "department": alert["department"], "provider": provider})
 
     while True:
         try:
@@ -187,14 +187,17 @@ async def _event_generator(alert: dict, db: Client) -> AsyncGenerator[str, None]
 # ---- Routes -----------------------------------------------------------------
 
 @router.get("/stream/{alert_id}")
-async def stream_agent(alert_id: int, db: Client = Depends(get_admin)):
+async def stream_agent(alert_id: int, provider: str = "mistral", db: Client = Depends(get_admin)):
     """
     SSE endpoint -- streams real-time agent reasoning steps.
 
-    Connect with: new EventSource('/api/agents/stream/{alert_id}')
+    Connect with: new EventSource('/api/agents/stream/{alert_id}?provider=groq')
 
     Event types: start | rag_fetch | rag_ready | thinking |
                  tool_call | tool_result | done | error | close
+
+    Query params:
+        provider: "mistral" (default) | "groq"
     """
     result = db.table("alerts").select("*").eq("id", alert_id).execute()
     if not result.data:
@@ -207,8 +210,12 @@ async def stream_agent(alert_id: int, db: Client = Depends(get_admin)):
             detail=f"Alert is already '{alert['status']}'. Cannot re-run agent.",
         )
 
+    valid_providers = {"mistral", "groq"}
+    if provider not in valid_providers:
+        raise HTTPException(status_code=400, detail=f"Invalid provider '{provider}'. Choose from: {valid_providers}")
+
     return StreamingResponse(
-        _event_generator(alert, db),
+        _event_generator(alert, db, provider),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -71,11 +71,11 @@ def trigger_supervisor(body: SupervisorRunRequest, db: Client = Depends(get_admi
 
 # ── SSE streaming run ─────────────────────────────────────────────────────────
 
-def _run_supervisor_streaming(alert: dict, db: Client, event_q: queue.Queue) -> None:
+def _run_supervisor_streaming(alert: dict, db: Client, event_q: queue.Queue, provider: str = "mistral") -> None:
     """Run supervisor in a background thread, push events to queue."""
     try:
         event_q.put({"type": "supervisor_start", "alert_id": alert["id"]})
-        result = run_supervisor_agent(alert, db, event_queue=event_q)
+        result = run_supervisor_agent(alert, db, event_queue=event_q, provider=provider)
 
         updated = db.table("alerts").select("status").eq("id", alert["id"]).execute()
         final_status = updated.data[0]["status"] if updated.data else "Unknown"
@@ -93,15 +93,15 @@ def _run_supervisor_streaming(alert: dict, db: Client, event_q: queue.Queue) -> 
         event_q.put(None)
 
 
-async def _supervisor_event_generator(alert: dict, db: Client) -> AsyncGenerator[str, None]:
+async def _supervisor_event_generator(alert: dict, db: Client, provider: str = "mistral") -> AsyncGenerator[str, None]:
     event_q: queue.Queue = queue.Queue()
     thread = threading.Thread(
         target=_run_supervisor_streaming,
-        args=(alert, db, event_q),
+        args=(alert, db, event_q, provider),
         daemon=True,
     )
     thread.start()
-    yield _sse({"type": "start", "alert_id": alert["id"], "department": "Supervisor"})
+    yield _sse({"type": "start", "alert_id": alert["id"], "department": "Supervisor", "provider": provider})
     import asyncio
     while True:
         try:
@@ -121,16 +121,23 @@ async def _supervisor_event_generator(alert: dict, db: Client) -> AsyncGenerator
 
 
 @router.get("/stream/{alert_id}")
-async def stream_supervisor(alert_id: int, db: Client = Depends(get_admin)):
-    """SSE stream for live Supervisor Agent orchestration."""
+async def stream_supervisor(alert_id: int, provider: str = "mistral", db: Client = Depends(get_admin)):
+    """SSE stream for live Supervisor Agent orchestration.
+
+    Query params:
+        provider: "mistral" (default) | "groq"
+    """
     result = db.table("alerts").select("*").eq("id", alert_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Alert not found")
     alert = result.data[0]
     if alert["status"] in ("Resolved", "Escalated"):
         raise HTTPException(status_code=400, detail=f"Alert already '{alert['status']}'.")
+    valid_providers = {"mistral", "groq"}
+    if provider not in valid_providers:
+        raise HTTPException(status_code=400, detail=f"Invalid provider '{provider}'. Choose from: {valid_providers}")
     return StreamingResponse(
-        _supervisor_event_generator(alert, db),
+        _supervisor_event_generator(alert, db, provider),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
     )

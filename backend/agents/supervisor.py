@@ -66,6 +66,7 @@ def run_supervisor_agent(
     alert: dict,
     db: Client,
     event_queue=None,
+    provider: str = "mistral",
 ) -> dict:
     """
     Run the Supervisor Agent on a Critical alert.
@@ -74,6 +75,7 @@ def run_supervisor_agent(
         alert:       The triggering alert dict.
         db:          Supabase admin client.
         event_queue: Optional queue for SSE streaming events.
+        provider:    LLM provider: "mistral" (default) or "groq".
 
     Returns:
         Agent result dict with run_id, total_steps, final_message.
@@ -94,6 +96,7 @@ def run_supervisor_agent(
         SUPERVISOR_SYSTEM_PROMPT,
         policy_context,
         event_queue=event_queue,
+        provider=provider,
     )
 
     user_prompt = (

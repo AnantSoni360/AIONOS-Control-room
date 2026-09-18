@@ -55,15 +55,17 @@ export const api = {
   getTrace: (runId) => request(`/api/agents/trace/${runId}`),
 
   // ── Agents (streaming SSE) ──────────────────────────────────────────────────
-  streamAgent(alertId, onStep, onDone, onError) {
-    return _openStream(`${BASE}/api/agents/stream/${alertId}`, onStep, onDone, onError);
+  // provider: "mistral" (default) | "groq"
+  streamAgent(alertId, onStep, onDone, onError, provider = "mistral") {
+    return _openStream(`${BASE}/api/agents/stream/${alertId}?provider=${provider}`, onStep, onDone, onError);
   },
 
   // ── Supervisor ─────────────────────────────────────────────────────────────
   runSupervisor: (alertId) =>
     request("/api/supervisor/run", { method: "POST", body: JSON.stringify({ alert_id: alertId }) }),
-  streamSupervisor(alertId, onStep, onDone, onError) {
-    return _openStream(`${BASE}/api/supervisor/stream/${alertId}`, onStep, onDone, onError);
+  // provider: "mistral" (default) | "groq"
+  streamSupervisor(alertId, onStep, onDone, onError, provider = "mistral") {
+    return _openStream(`${BASE}/api/supervisor/stream/${alertId}?provider=${provider}`, onStep, onDone, onError);
   },
   getSupervisorTree: (runId) => request(`/api/supervisor/tree/${runId}`),
   getSupervisorHistory: (limit = 20) => request(`/api/supervisor/history?limit=${limit}`),
@@ -95,7 +97,9 @@ export const api = {
 /** Shared SSE helper — attaches token as query param (EventSource can't set headers). */
 function _openStream(url, onStep, onDone, onError) {
   const token = getToken();
-  const fullUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+  // url already has ?provider=..., so append token with &
+  const separator = url.includes("?") ? "&" : "?";
+  const fullUrl = token ? `${url}${separator}token=${encodeURIComponent(token)}` : url;
   const es = new EventSource(fullUrl);
 
   es.onmessage = (e) => {
@@ -115,4 +119,3 @@ function _openStream(url, onStep, onDone, onError) {
   };
   return es;
 }
-

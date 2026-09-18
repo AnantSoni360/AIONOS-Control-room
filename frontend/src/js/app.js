@@ -17,6 +17,7 @@ const state = {
   pendingApprovalCount: 0,
   activeStreams: {},   // alertId -> EventSource
   activeSupervisor: null,  // { alertId, runId, startTime }
+  selectedProvider: "mistral",  // "mistral" | "groq"
 };
 
 // ── Router ────────────────────────────────────────────────────────────────────
@@ -262,6 +263,27 @@ function renderAlerts() {
         <h1>Alerts</h1>
         <p>▶ Run Agent — autonomous resolution · 🔀 Orchestrate — multi-agent for Critical alerts</p>
       </div>
+
+      <!-- LLM Provider Toggle -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 16px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-lg)">
+        <span style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);white-space:nowrap">🤖 LLM Provider</span>
+        <div style="display:flex;gap:6px;background:var(--bg-input);border:1px solid var(--border);border-radius:100px;padding:3px">
+          <button id="provider-mistral" onclick="window.setProvider('mistral')"
+            style="padding:5px 16px;border-radius:100px;border:none;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.18s;background:${state.selectedProvider==='mistral'?'linear-gradient(135deg,#6366f1,#4f46e5)':'transparent'};color:${state.selectedProvider==='mistral'?'#fff':'var(--text-secondary)'}">
+            ✦ Mistral
+          </button>
+          <button id="provider-groq" onclick="window.setProvider('groq')"
+            style="padding:5px 16px;border-radius:100px;border:none;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.18s;background:${state.selectedProvider==='groq'?'linear-gradient(135deg,#f97316,#ea580c)':'transparent'};color:${state.selectedProvider==='groq'?'#fff':'var(--text-secondary)'}">
+            ⚡ Groq
+          </button>
+        </div>
+        <span style="font-size:0.73rem;color:var(--text-muted)">
+          ${state.selectedProvider === "groq"
+            ? "<span style='color:#f97316;font-weight:600'>Groq (llama-3.3-70b-versatile)</span> — ultra-fast inference"
+            : "<span style='color:#6366f1;font-weight:600'>Mistral (mistral-large-latest)</span> — default provider"}
+        </span>
+      </div>
+
       <div class="flex gap-3 items-center" style="margin-bottom:16px;flex-wrap:wrap">
         <select id="filter-dept" class="select" onchange="window.applyAlertFilters()">
           <option value="">All Departments</option>
@@ -369,27 +391,38 @@ window.applyAlertFilters = function() {
 };
 window.setDeptFilter = function(dept) { state.alertFilters.department = dept; };
 
+// ── Provider Selection ────────────────────────────────────────────────────────
+window.setProvider = function(provider) {
+  state.selectedProvider = provider;
+  // Re-render the alerts page so the toggle reflects immediately
+  if (state.page === "alerts") renderAlerts();
+  toast(`LLM provider switched to ${ provider === "groq" ? "⚡ Groq (llama-3.3-70b)" : "✦ Mistral (mistral-large)"}`, "info");
+};
+
 // ── Department Agent Streaming ────────────────────────────────────────────────
 window.runAgentStreaming = function(alertId) {
   if (state.activeStreams[alertId]) return;
-  openStreamingDrawer(alertId, "Agent Run", "#6366f1");
+  const provider = state.selectedProvider || "mistral";
+  openStreamingDrawer(alertId, `Agent Run <span style="font-size:0.72rem;opacity:.8">[${provider === "groq" ? "⚡ Groq" : "✦ Mistral"}]</span>`, "#6366f1");
   const start = Date.now();
   const es = api.streamAgent(
     alertId,
     (ev) => appendStreamStep(alertId, ev, start),
     (ev) => { delete state.activeStreams[alertId]; finalizeStreamDrawer(alertId, ev, start); loadAlerts(); loadGlobal(); renderSidebar(); },
-    (msg) => { delete state.activeStreams[alertId]; renderSidebar(); toast(`Agent error: ${msg}`, "error"); }
+    (msg) => { delete state.activeStreams[alertId]; renderSidebar(); toast(`Agent error: ${msg}`, "error"); },
+    provider,
   );
   state.activeStreams[alertId] = es;
   renderSidebar();
-  toast(`Agent streaming for Alert #${alertId}`, "info");
+  toast(`Agent streaming for Alert #${alertId} via ${provider === "groq" ? "⚡ Groq" : "✦ Mistral"}`, "info");
 };
 
 // ── Supervisor Orchestration Streaming ────────────────────────────────────────
 window.runSupervisor = function(alertId) {
   if (state.activeSupervisor) { toast("An orchestration is already running", "warning"); return; }
+  const provider = state.selectedProvider || "mistral";
   state.activeSupervisor = { alertId, startTime: Date.now() };
-  openStreamingDrawer(alertId, "🔀 Supervisor Orchestration", "#8b5cf6");
+  openStreamingDrawer(alertId, `🔀 Supervisor Orchestration <span style="font-size:0.72rem;opacity:.8">[${provider === "groq" ? "⚡ Groq" : "✦ Mistral"}]</span>`, "#8b5cf6");
   const start = Date.now();
 
   // Add supervisor badge to drawer header
@@ -414,13 +447,14 @@ window.runSupervisor = function(alertId) {
       state.activeSupervisor = null;
       renderSidebar(); renderAlertsGrid();
       toast(`Orchestration error: ${msg}`, "error");
-    }
+    },
+    provider,
   );
   // Store in activeStreams too for sidebar count
   state.activeStreams[`supervisor-${alertId}`] = es;
   renderAlertsGrid();
   renderSidebar();
-  toast(`Supervisor orchestrating Alert #${alertId}…`, "info");
+  toast(`Supervisor orchestrating Alert #${alertId} via ${provider === "groq" ? "⚡ Groq" : "✦ Mistral"}…`, "info");
 };
 
 // ── Streaming Drawer ──────────────────────────────────────────────────────────

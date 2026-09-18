@@ -14,7 +14,9 @@ Supports two modes:
 Phase 5: graph.invoke() runs inside a ThreadPoolExecutor with a configurable
 timeout. AgentTimeoutError is raised if the agent exceeds AGENT_TIMEOUT_SECONDS.
 
-Uses Groq Llama 3 via langchain-groq.
+Supports two LLM providers (selected via `provider` argument):
+  - "mistral" : Mistral AI via langchain-mistralai  (mistral-large-latest)
+  - "groq"    : Groq via langchain-groq             (llama-3.3-70b-versatile)
 """
 
 import os
@@ -24,6 +26,7 @@ from typing import Annotated, Sequence, TypedDict, Optional
 
 from langchain_core.messages import BaseMessage, SystemMessage, ToolMessage
 from langchain_core.tools import BaseTool
+from langchain_mistralai import ChatMistralAI
 from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -58,6 +61,7 @@ def create_agent_graph(
     system_prompt: str,
     policy_context: str = "",
     event_queue: Optional[queue_module.Queue] = None,
+    provider: str = "mistral",
 ):
     """
     Build and compile a LangGraph ReAct agent.
@@ -67,6 +71,7 @@ def create_agent_graph(
         system_prompt:  Department-specific system prompt grounded in SOP policy.
         policy_context: Optional RAG-retrieved SOP policy chunks.
         event_queue:    If provided, each step pushes a typed event dict for SSE.
+        provider:       LLM provider to use: "mistral" (default) or "groq".
 
     Returns:
         Compiled LangGraph graph ready to invoke.
@@ -77,11 +82,18 @@ def create_agent_graph(
         else system_prompt
     )
 
-    llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
-        api_key=os.getenv("GROQ_API_KEY"),
-        temperature=0,
-    ).bind_tools(tools)
+    if provider == "groq":
+        llm = ChatGroq(
+            model="llama-3.3-70b-versatile",
+            api_key=os.getenv("GROQ_API_KEY"),
+            temperature=0,
+        ).bind_tools(tools)
+    else:
+        llm = ChatMistralAI(
+            model="mistral-large-latest",
+            api_key=os.getenv("MISTRAL_API_KEY"),
+            temperature=0,
+        ).bind_tools(tools)
 
     tool_node = ToolNode(tools)
     step_counter = [0]
