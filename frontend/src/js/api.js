@@ -8,7 +8,7 @@ import { getToken, logout } from "./auth.js";
 // Auto-detect backend URL:
 //   - In production: set window.AIONOS_API_URL via a <script> or env injection
 //   - Fallback to localhost for local dev
-const BASE = window.AIONOS_API_URL || "http://localhost:8000";
+const BASE = window.AIONOS_API_URL || "https://aionos-agentic-factory-production.up.railway.app";
 
 async function request(path, options = {}) {
   const token = getToken();

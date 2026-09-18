@@ -5,7 +5,7 @@
  * All api.js calls attach the token automatically.
  */
 
-const BASE = window.AIONOS_API_URL || "http://localhost:8000";
+const BASE = window.AIONOS_API_URL || "https://aionos-agentic-factory-production.up.railway.app";
 
 const TOKEN_KEY   = "aionos_token";
 const REFRESH_KEY = "aionos_refresh_token";
