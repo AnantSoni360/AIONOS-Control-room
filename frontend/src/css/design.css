@@ -2,7 +2,7 @@
    AIONOS Design System - White & Orange Curve Theme
    ============================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
 /* -- Color Tokens ------------------------------------------- */
 :root {
@@ -71,13 +71,19 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 0.2s var(--ease);
   --transition-slow: 0.4s var(--ease);
+
+  /* Fonts */
+  --font-body: "Plus Jakarta Sans", sans-serif;
+  --font-heading: "Outfit", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 /* -- Reset -------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body {
-  font-family: "Inter", -apple-system, system-ui, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg-base);
   color: var(--text-primary);
   min-height: 100vh;
@@ -97,7 +103,9 @@ img { max-width: 100%; }
 .text-xl   { font-size: 1.375rem; }
 .text-2xl  { font-size: 1.75rem; }
 .text-3xl  { font-size: 2.25rem; }
-.font-mono { font-family: "JetBrains Mono", monospace; }
+.font-mono { font-family: var(--font-mono); }
+.font-heading { font-family: var(--font-heading); }
+.font-display { font-family: var(--font-display); }
 .font-medium { font-weight: 500; }
 .font-semibold { font-weight: 600; }
 .font-bold   { font-weight: 700; }
@@ -385,3 +393,13 @@ tr:hover td { background: var(--bg-input); }
 .prose ul, .prose ol { margin-bottom: 12px; padding-left: 24px; }
 .prose li { margin-bottom: 4px; }
 .prose code { background: var(--bg-input); padding: 2px 6px; border-radius: 4px; font-family: "JetBrains Mono", monospace; font-size: 0.9em; }
+
+/* -- Creative Typography Overrides -- */
+.card-title { font-family: var(--font-heading); font-size: 1.25rem; letter-spacing: -0.02em; }
+.logo-text { font-family: var(--font-display); letter-spacing: -0.05em; font-size: 1.3rem; }
+.logo-text span { font-family: var(--font-body); letter-spacing: 0.1em; }
+.login-title { font-family: var(--font-heading); font-size: 1.8rem; letter-spacing: -0.03em; }
+.stat-value { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; letter-spacing: -0.05em; color: var(--indigo); }
+.stat-label { font-family: var(--font-body); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 4px; }
+th { font-family: var(--font-heading); font-size: 0.8rem; letter-spacing: 0.05em; }
+.nav-section-label { font-family: var(--font-heading); font-size: 0.75rem; letter-spacing: 0.08em; }
