@@ -1,0 +1,69 @@
+AIONOS ENTERPRISE — FINANCE DEPARTMENT
+STANDARD OPERATING PROCEDURE: INVOICE PROCESSING & MISMATCH RESOLUTION
+Version 2.4 | Effective: January 1, 2026 | Owner: CFO Office
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. PURPOSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This SOP governs the end-to-end invoice processing lifecycle, with specific
+provisions for automated detection and resolution of invoice mismatches.
+All AI-driven resolutions must comply with this policy.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. INVOICE MISMATCH THRESHOLDS & ESCALATION POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 AUTO-APPROVE THRESHOLD (No Human Required)
+   - Mismatch ≤ 2% of PO value AND ≤ $500 absolute: System may auto-approve.
+   - Agent must document reason and notify AP team via email.
+
+2.2 SENIOR AP ANALYST APPROVAL REQUIRED
+   - Mismatch > 2% but ≤ 10% of PO value OR between $500–$5,000 absolute.
+   - Response required within 4 business hours.
+   - Agent must provide: invoice detail, PO detail, mismatch reason, supplier history.
+
+2.3 CFO APPROVAL REQUIRED (High-Risk Escalation)
+   - Mismatch > 10% of PO value OR > $5,000 absolute difference.
+   - Duplicate invoice detected.
+   - Missing PO reference on invoice.
+   - Currency mismatch (multi-currency invoices).
+   - Response required within 24 business hours.
+
+2.4 AUTOMATIC REJECTION CRITERIA (Agent May Auto-Reject)
+   - Invoice submitted more than 90 days after delivery.
+   - Supplier not on approved vendor list.
+   - Invoice amount exceeds supplier credit limit.
+   - VAT arithmetic error > 0.01%.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. DUPLICATE INVOICE DETECTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- A duplicate is defined as: same supplier + same PO number + amount within 1%.
+- All duplicates must be escalated immediately to CFO regardless of amount.
+- Supplier must be notified via email within 2 business hours.
+- Payment must be frozen until resolution.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. PAYMENT TERMS ENFORCEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Net 15: Payment within 15 days of invoice approval.
+- Net 30: Standard terms — payment within 30 days.
+- Net 45/60: Extended terms require CFO countersignature on contract.
+- Early payment discount (2/10 Net 30): If supplier offers 2% discount for
+  payment within 10 days, AP agent may recommend early payment.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. SUPPLIER CREDIT LIMIT POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Invoices that would cause total outstanding payables to exceed the supplier
+  credit limit must be escalated to Procurement and CFO.
+- Credit limits are reviewed quarterly by the Procurement team.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. AUDIT & COMPLIANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Every automated action taken by the Finance Agent must be logged in the
+  immutable audit trail with: timestamp, action type, invoice ID, agent decision,
+  and policy reference cited.
+- All CFO-level approvals must be countersigned within the ERP system.
+- Audit logs are retained for 7 years per SOX compliance requirements.

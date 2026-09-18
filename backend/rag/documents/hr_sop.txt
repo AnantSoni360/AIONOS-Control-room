@@ -1,0 +1,64 @@
+AIONOS ENTERPRISE — HR DEPARTMENT
+STANDARD OPERATING PROCEDURE: EMPLOYEE ONBOARDING & BLOCKER RESOLUTION
+Version 3.1 | Effective: January 1, 2026 | Owner: Chief People Officer
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ONBOARDING TIMELINE SLA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Day 0 (Start Date): Laptop, email, and building access must be provisioned.
+- Day 1: HR portal registration, payroll setup, benefits enrollment.
+- Day 3: All legal documents (NDA, employment contract, IP agreement) signed.
+- Day 5: VPN, all software licenses, and system access granted.
+- Day 14: Onboarding officially complete. Manager signs off in HRIS.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKER ESCALATION POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 IT BLOCKERS
+   - Laptop not provisioned by Day 0: IT Helpdesk must resolve within 4 hours.
+     If unresolved after 4h, escalate to IT Manager.
+   - VPN/software license issue: IT has 8 hours to resolve from ticket creation.
+   - System access failures: IT Helpdesk SLA is 2 business hours.
+   - Agent action: Create IT ticket, notify IT Helpdesk, set reminder for SLA.
+
+2.2 LEGAL BLOCKERS
+   - Unsigned NDA or employment contract after Day 1: HR must follow up directly.
+   - Background check delay > 5 business days: Escalate to background check vendor
+     and notify Legal team. Employee may begin work with provisional clearance.
+   - IP agreement unsigned after Day 2: Legal Counsel must be notified.
+   - Agent action: Send DocuSign reminder, notify Legal team, log in HRIS.
+
+2.3 MANAGER BLOCKERS
+   - Manager approval pending > 24 hours: Send escalation email to manager.
+   - Manager out of office: Delegate approval authority to department head.
+   - Agent action: Identify backup approver, reroute approval, log action.
+
+2.4 FACILITIES BLOCKERS
+   - Access card not issued by Day 0: Facilities team notified with 2h SLA.
+   - Desk not assigned: Facilities Manager must respond within 4 hours.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. CRITICAL ESCALATION (CPO REQUIRED)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Employee blocked for more than 5 business days.
+- Background check reveals a disqualifying finding.
+- Employee reports hostile environment or safety concern.
+- Onboarding for C-suite or VP-level hire experiencing any blocker.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. COMPLIANCE REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- I-9 verification must be completed by Day 3 (US employees).
+- GDPR data processing consent must be obtained before storing EU employee data.
+- All onboarding actions must be logged in the HRIS audit trail.
+- Background check vendor: HireRight (primary), Sterling (backup).
+- Background check consent: Employee must provide written consent before check begins.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. PROBATION POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Standard probation: 90 days from start date.
+- During probation, either party may terminate with 2 weeks notice.
+- Probation may be extended by manager with CPO approval (max 30-day extension).
+- Extension requires documented performance concerns submitted to HR.

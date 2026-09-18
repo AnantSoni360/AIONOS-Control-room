@@ -1,0 +1,69 @@
+AIONOS ENTERPRISE — SALES & ALLIANCES DEPARTMENT
+STANDARD OPERATING PROCEDURE: DEAL MANAGEMENT & STALLED DEAL RECOVERY
+Version 1.8 | Effective: January 1, 2026 | Owner: Chief Revenue Officer
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. DEAL STALL DEFINITION & THRESHOLDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A deal is classified as "stalled" when there has been no logged CRM activity
+(call, email, meeting, or note) for the following periods by stage:
+
+  - Prospecting: > 14 days without activity
+  - Qualification: > 14 days without activity
+  - Proposal: > 21 days without activity
+  - Negotiation: > 30 days without activity
+
+Any deal in any stage with > 45 days of inactivity is CRITICAL.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. AUTOMATED RECOVERY ACTIONS (Agent May Execute)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 STAGE 1 — AUTOMATED NUDGE (Days 14–29 stalled)
+   - Agent sends automated follow-up email to assigned rep.
+   - Agent logs a "follow-up reminder" task in CRM.
+   - Agent updates deal "last_activity_date" after logging the task.
+
+2.2 STAGE 2 — MANAGER ALERT (Days 30–44 stalled)
+   - Agent notifies Sales Manager via email with deal summary.
+   - Agent schedules a review meeting between rep and manager.
+   - Agent may recommend deal stage downgrade if probability < 30%.
+
+2.3 STAGE 3 — CRO ESCALATION (> 45 days stalled, CRITICAL)
+   - Agent escalates to CRO with full deal brief.
+   - Requires human decision: continue, reassign rep, or close lost.
+   - Agent must provide: deal value, contact info, stall reason, win probability.
+   - Agent MUST NOT change deal status without CRO approval at this stage.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. DEAL REASSIGNMENT POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Reassignment requires Sales Manager approval for deals < $50,000.
+- Reassignment requires CRO approval for deals ≥ $50,000.
+- Enterprise deals (≥ $100,000): VP of Sales must co-approve reassignment.
+- Agent must notify both old and new reps, and update CRM within 1 hour.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. RISK SCORING GUIDELINES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+High-Risk deal indicators (agent must flag):
+  - Expected close date has passed (deal overdue)
+  - Win probability < 20%
+  - Budget freeze confirmed by prospect
+  - Primary champion has left the prospect company
+  - More than 2 competitor evaluations in progress
+
+Low-Risk indicators (agent may handle autonomously):
+  - Stall due to prospect scheduling conflicts
+  - Awaiting legal review with known timeline
+  - Holiday/seasonal delays within expected range
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. CLOSING PROTOCOL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Closed Won: Revenue recognized in current quarter if contract signed by
+  last business day of quarter. Agent updates CRM status immediately.
+- Closed Lost: Agent must log loss reason (mandatory). Sales Manager must
+  review within 5 business days for win/loss analysis.
+- Discounts > 20%: Require VP of Sales approval before contract execution.
+- Discounts > 35%: Require CRO approval.
