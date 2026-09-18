@@ -9,18 +9,21 @@ GET  /api/supervisor/history        -- last N supervisor runs
 
 import json
 import queue
+import asyncio
 import threading
 from datetime import datetime, timezone
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from supabase import Client
 
+from config import settings
 from database.db import get_admin
 from agents.supervisor import run_supervisor_agent
-from routers.stream import _run_streaming, _sse, _ping, KEEPALIVE_INTERVAL
+from routers.stream import _sse, _ping, KEEPALIVE_INTERVAL
 
 router = APIRouter(prefix="/api/supervisor", tags=["Supervisor"])
 
@@ -102,7 +105,6 @@ async def _supervisor_event_generator(alert: dict, db: Client, provider: str = "
     )
     thread.start()
     yield _sse({"type": "start", "alert_id": alert["id"], "department": "Supervisor", "provider": provider})
-    import asyncio
     while True:
         try:
             try:
@@ -121,12 +123,32 @@ async def _supervisor_event_generator(alert: dict, db: Client, provider: str = "
 
 
 @router.get("/stream/{alert_id}")
-async def stream_supervisor(alert_id: int, provider: str = "mistral", db: Client = Depends(get_admin)):
+async def stream_supervisor(
+    alert_id: int,
+    provider: str = "mistral",
+    token: Optional[str] = Query(None),
+    db: Client = Depends(get_admin),
+):
     """SSE stream for live Supervisor Agent orchestration.
 
     Query params:
         provider: "mistral" (default) | "groq"
+        token:    JWT bearer token (required; EventSource cannot send headers)
     """
+    # Validate JWT passed as query param (EventSource cannot set Authorization headers)
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required. Please log in.")
+    try:
+        jwt.decode(
+            token,
+            settings.effective_jwt_secret,
+            algorithms=[settings.jwt_algorithm],
+            options={"verify_aud": False},
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
     result = db.table("alerts").select("*").eq("id", alert_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Alert not found")

@@ -11,12 +11,14 @@ import queue
 import asyncio
 import threading
 from datetime import datetime, timezone
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from supabase import Client
 
+from config import settings
 from database.db import get_admin
 from agents.base_agent import create_agent_graph, extract_result
 from rag.retriever import retrieve_policy
@@ -187,18 +189,38 @@ async def _event_generator(alert: dict, db: Client, provider: str = "mistral") -
 # ---- Routes -----------------------------------------------------------------
 
 @router.get("/stream/{alert_id}")
-async def stream_agent(alert_id: int, provider: str = "mistral", db: Client = Depends(get_admin)):
+async def stream_agent(
+    alert_id: int,
+    provider: str = "mistral",
+    token: Optional[str] = Query(None),
+    db: Client = Depends(get_admin),
+):
     """
     SSE endpoint -- streams real-time agent reasoning steps.
 
-    Connect with: new EventSource('/api/agents/stream/{alert_id}?provider=groq')
+    Connect with: new EventSource('/api/agents/stream/{alert_id}?provider=groq&token=<jwt>')
 
     Event types: start | rag_fetch | rag_ready | thinking |
                  tool_call | tool_result | done | error | close
 
     Query params:
         provider: "mistral" (default) | "groq"
+        token:    JWT bearer token (required; EventSource cannot send headers)
     """
+    # Validate JWT passed as query param (EventSource cannot set Authorization headers)
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required. Please log in.")
+    try:
+        jwt.decode(
+            token,
+            settings.effective_jwt_secret,
+            algorithms=[settings.jwt_algorithm],
+            options={"verify_aud": False},
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Session expired. Please log in again.")
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
     result = db.table("alerts").select("*").eq("id", alert_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Alert not found")

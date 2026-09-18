@@ -1,0 +1,20 @@
+{
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Windows",
+  "include": [
+    "backend"
+  ],
+  "venvPath": "backend",
+  "venv": "venv",
+  "extraPaths": [
+    "backend"
+  ],
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "none",
+  "typeCheckingMode": "basic",
+  "exclude": [
+    "backend/venv",
+    "backend/__pycache__",
+    "backend/**/__pycache__"
+  ]
+}
