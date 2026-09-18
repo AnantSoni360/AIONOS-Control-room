@@ -134,7 +134,9 @@ img { max-width: 100%; }
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
-  position: relative;
+  position: sticky;
+  top: 16px;
+  height: calc(100vh - 32px);
   z-index: 10;
 }
 
