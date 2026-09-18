@@ -5,7 +5,10 @@
 
 import { getToken, logout } from "./auth.js";
 
-const BASE = "http://localhost:8000";
+// Auto-detect backend URL:
+//   - In production: set window.AIONOS_API_URL via a <script> or env injection
+//   - Fallback to localhost for local dev
+const BASE = window.AIONOS_API_URL || "http://localhost:8000";
 
 async function request(path, options = {}) {
   const token = getToken();
@@ -112,3 +115,4 @@ function _openStream(url, onStep, onDone, onError) {
   };
   return es;
 }
+

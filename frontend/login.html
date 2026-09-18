@@ -140,7 +140,7 @@
   </div>
 
   <script>
-    const BASE = "http://localhost:8000";
+    const BASE = window.AIONOS_API_URL || "http://localhost:8000";
 
     // If already logged in, redirect to dashboard
     const token = localStorage.getItem("aionos_token");
@@ -191,3 +191,4 @@
   </script>
 </body>
 </html>
+

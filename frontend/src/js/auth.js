@@ -5,7 +5,7 @@
  * All api.js calls attach the token automatically.
  */
 
-const BASE = "http://localhost:8000";
+const BASE = window.AIONOS_API_URL || "http://localhost:8000";
 
 const TOKEN_KEY   = "aionos_token";
 const REFRESH_KEY = "aionos_refresh_token";
@@ -84,3 +84,4 @@ export async function requireAuth() {
     window.location.href = "/ui/login.html";
   }
 }
+
