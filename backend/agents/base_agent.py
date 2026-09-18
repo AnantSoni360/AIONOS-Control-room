@@ -14,7 +14,7 @@ Supports two modes:
 Phase 5: graph.invoke() runs inside a ThreadPoolExecutor with a configurable
 timeout. AgentTimeoutError is raised if the agent exceeds AGENT_TIMEOUT_SECONDS.
 
-Uses Google Gemini 2.5 Flash via langchain-google-genai.
+Uses Groq Llama 3 via langchain-groq.
 """
 
 import os
@@ -24,7 +24,7 @@ from typing import Annotated, Sequence, TypedDict, Optional
 
 from langchain_core.messages import BaseMessage, SystemMessage, ToolMessage
 from langchain_core.tools import BaseTool
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
@@ -77,9 +77,9 @@ def create_agent_graph(
         else system_prompt
     )
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=os.getenv("GOOGLE_API_KEY"),
+    llm = ChatGroq(
+        model="llama-3.3-70b-versatile",
+        api_key=os.getenv("GROQ_API_KEY"),
         temperature=0,
     ).bind_tools(tools)
 

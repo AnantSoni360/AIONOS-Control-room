@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     jwt_secret:     str = ""    # falls back to supabase_service_role_key if empty
     jwt_algorithm:  str = "HS256"
 
-    # Google AI
-    google_api_key: str
+    # Groq AI
+    groq_api_key: str
 
     # Agent limits
     agent_timeout_seconds: int = 120
