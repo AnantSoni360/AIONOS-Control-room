@@ -43,7 +43,8 @@ export function logout() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(USER_KEY);
-  window.location.href = "/ui/login.html";
+  const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
+  window.location.href = `${basePath}/login.html`;
 }
 
 /**
@@ -81,7 +82,8 @@ export async function requireAuth() {
   // Try silent refresh
   const refreshed = await tryRefresh();
   if (!refreshed) {
-    window.location.href = "/ui/login.html";
+    const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
+    window.location.href = `${basePath}/login.html`;
   }
 }
 

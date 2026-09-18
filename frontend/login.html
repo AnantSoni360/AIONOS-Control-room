@@ -148,7 +148,8 @@
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
         if (payload.exp * 1000 > Date.now()) {
-          window.location.href = "/ui/";
+          const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
+          window.location.href = `${basePath}/`;
         }
       } catch (_) {}
     }
@@ -180,7 +181,8 @@
         localStorage.setItem("aionos_refresh_token",  data.refresh_token);
         localStorage.setItem("aionos_user",           JSON.stringify(data.user));
 
-        window.location.href = "/ui/";
+        const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
+        window.location.href = `${basePath}/`;
       } catch (err) {
         error.textContent = err.message || "Invalid credentials. Please try again.";
         error.classList.add("show");
