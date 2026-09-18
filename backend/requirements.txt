@@ -11,9 +11,9 @@ python-multipart==0.0.20
 
 # AI / LLM
 langchain==0.3.9
-langchain-groq==0.2.1
+langchain-groq>=0.2.1
 langchain-community==0.3.9
-langchain-core==0.3.21
+langchain-core>=0.3.21
 langgraph==0.2.55
 
 # RAG / Vector
