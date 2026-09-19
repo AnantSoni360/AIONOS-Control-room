@@ -8,7 +8,7 @@ import { getToken, logout } from "./auth.js";
 // Auto-detect backend URL:
 //   - In production: set window.AIONOS_API_URL via a <script> or env injection
 //   - Fallback to localhost for local dev
-const BASE = window.AIONOS_API_URL || "https://aionos-agentic-factory-production.up.railway.app";
+const BASE = window.AIONOS_API_URL || "http://127.0.0.1:8000";
 
 async function request(path, options = {}) {
   const token = getToken();
@@ -92,6 +92,9 @@ export const api = {
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   getMe: () => request("/api/auth/me"),
+
+  // ── Limits ──────────────────────────────────────────────────────────────────
+  getLimits: () => request("/api/limits/"),
 };
 
 /** Shared SSE helper — attaches token as query param (EventSource can't set headers). */

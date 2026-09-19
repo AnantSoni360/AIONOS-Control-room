@@ -15,6 +15,13 @@ from langchain_core.tools import tool
 from supabase import Client
 
 _db: Client | None = None
+_run_id: str | None = None  # current run's ID, set by agent runner
+
+
+def set_run_id(run_id: str) -> None:
+    """Called by the agent runner to inject the current run_id before tool use."""
+    global _run_id
+    _run_id = run_id
 
 
 def set_db(client: Client) -> None:
@@ -30,12 +37,14 @@ def _now_iso() -> str:
 def get_shipment(shipment_id: int) -> str:
     """
     Fetch a single shipment record along with its supplier contract details.
+    Pre-computes penalty amount and recommends the correct SOP action tier.
 
     Args:
         shipment_id: Primary key of the shipment.
 
     Returns:
-        JSON with shipment fields plus contract (sla_delivery_days, penalty_per_day, max_penalty).
+        JSON with shipment fields, contract details, pre-computed penalty,
+        and RECOMMENDED_ACTION field.
     """
     ship = _db.table("shipments").select("*").eq("id", shipment_id).execute().data
     if not ship:
@@ -45,6 +54,31 @@ def get_shipment(shipment_id: int) -> str:
     contract = _db.table("supplier_contracts").select("*") \
                   .eq("id", ship["contract_id"]).execute().data
     ship["contract"] = contract[0] if contract else {}
+
+    # Pre-compute penalty and determine SOP tier
+    days_delayed = int(ship.get("days_delayed") or 0)
+    cargo_value = float(ship.get("cargo_value") or 0)
+    contract_data = ship["contract"]
+    penalty_per_day = float(contract_data.get("penalty_per_day") or 0)
+    max_penalty = float(contract_data.get("max_penalty_amount") or 0)
+    computed_penalty = min(days_delayed * penalty_per_day, max_penalty) if max_penalty else days_delayed * penalty_per_day
+
+    ship["computed_days_delayed"] = days_delayed
+    ship["computed_cargo_value"] = cargo_value
+    ship["computed_penalty"] = round(computed_penalty, 2)
+
+    # Operations SOP v2.0 tier logic
+    if days_delayed > 14 or cargo_value > 100000:
+        ship["RECOMMENDED_ACTION"] = "ESCALATE_COO: Call calculate_and_apply_penalty() THEN create_approval_request(risk_level='Critical') — Critical breach"
+    elif days_delayed >= 8:
+        ship["RECOMMENDED_ACTION"] = "ESCALATE_COO: Call calculate_and_apply_penalty() THEN create_approval_request(risk_level='Critical') — Major breach 8-14 days"
+    elif days_delayed >= 4:
+        ship["RECOMMENDED_ACTION"] = "ESCALATE_PROCUREMENT: Call calculate_and_apply_penalty() THEN create_approval_request(risk_level='High') — Moderate breach 4-7 days"
+    elif days_delayed >= 1:
+        ship["RECOMMENDED_ACTION"] = "AUTO_PENALTY: Call calculate_and_apply_penalty() THEN flag_sla_breach() — Minor breach, autonomous action allowed"
+    else:
+        ship["RECOMMENDED_ACTION"] = "MONITOR: No breach detected"
+
     return json.dumps(ship, default=str)
 
 
@@ -228,6 +262,7 @@ def write_audit_log(
         "step_index": step_index,
         "timestamp": _now_iso(),
         "is_human_action": False,
+        "run_id": _run_id,  # link log entries to the run for Observatory traces
     }
     _db.table("audit_logs").insert(row).execute()
     return json.dumps({"logged": True, "action": action})

@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from supabase import Client
 
 from database.db import get_supabase, get_admin
+from middleware.auth import require_auth
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts"])
 
@@ -20,6 +21,7 @@ def list_alerts(
     limit: int  = Query(50, le=200),
     offset: int = Query(0),
     db: Client  = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
 ):
     """Paginated alert list with optional filters."""
     q = db.table("alerts").select("*")
@@ -50,7 +52,10 @@ def list_alerts(
 
 
 @router.get("/summary")
-def alerts_summary(db: Client = Depends(get_admin)):
+def alerts_summary(
+    db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
+):
     """KPI counts per department and overall."""
     departments = ["Finance", "HR", "Sales", "Operations"]
     statuses    = ["Open", "In_Progress", "Resolved", "Escalated", "Pending_Approval"]
@@ -85,7 +90,11 @@ def alerts_summary(db: Client = Depends(get_admin)):
 
 
 @router.get("/{alert_id}")
-def get_alert(alert_id: int, db: Client = Depends(get_admin)):
+def get_alert(
+    alert_id: int,
+    db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
+):
     """Single alert with its audit trail."""
     result = db.table("alerts").select("*").eq("id", alert_id).execute()
     if not result.data:
@@ -102,6 +111,7 @@ def update_alert_status(
     alert_id: int,
     status: str,
     db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
 ):
     """Manually update alert status."""
     valid = ["Open", "In_Progress", "Resolved", "Escalated", "Pending_Approval"]

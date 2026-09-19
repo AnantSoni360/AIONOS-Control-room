@@ -61,7 +61,7 @@ def create_agent_graph(
     system_prompt: str,
     policy_context: str = "",
     event_queue: Optional[queue_module.Queue] = None,
-    provider: str = "mistral",
+    provider: str = "groq",  # mistral is rate-limited; groq is default
 ):
     """
     Build and compile a LangGraph ReAct agent.
@@ -84,13 +84,13 @@ def create_agent_graph(
 
     if provider == "groq":
         llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",  # confirmed working model on this key
             api_key=os.getenv("GROQ_API_KEY"),
             temperature=0,
         ).bind_tools(tools)
     else:
         llm = ChatMistralAI(
-            model="mistral-large-latest",
+            model="open-mistral-7b",
             api_key=os.getenv("MISTRAL_API_KEY"),
             temperature=0,
         ).bind_tools(tools)

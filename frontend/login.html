@@ -3,161 +3,304 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AIONOS — Sign In</title>
-  <meta name="description" content="Sign in to AIONOS Operations Control Room" />
-  <link rel="stylesheet" href="src/css/design.css" />
+  <title>AIONOS — Control Room</title>
+  <meta name="description" content="AIONOS Operations Control Room" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ea580c'/><text y='.9em' font-size='70' x='12'>A</text></svg>" />
   <style>
-    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f8fafc; }
-
-    body::before {
-      content: ''; position: fixed; inset: 0; pointer-events: none;
-      background:
-        radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.08), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(234, 88, 12, 0.06), transparent 25%);
+    :root {
+      --primary: #f97316;
+      --primary-dark: #ea580c;
+      --accent: #8b5cf6;
+      --bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.75);
+      --card-border: rgba(255, 255, 255, 0.9);
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    
+    body { 
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden; 
+      position: relative;
     }
 
-    .login-wrapper {
-      position: relative; z-index: 1;
-      width: 100%; max-width: 440px;
+    /* Animated background elements */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+      opacity: 0.6;
+      animation: float 10s ease-in-out infinite alternate;
+    }
+    .blob-1 {
+      top: -10%; left: -10%;
+      width: 500px; height: 500px;
+      background: rgba(139, 92, 246, 0.4);
+      animation-delay: 0s;
+    }
+    .blob-2 {
+      bottom: -10%; right: -10%;
+      width: 400px; height: 400px;
+      background: rgba(249, 115, 22, 0.3);
+      animation-delay: -5s;
+    }
+    .blob-3 {
+      top: 40%; left: 60%;
+      width: 300px; height: 300px;
+      background: rgba(56, 189, 248, 0.2);
+      animation-delay: -2s;
+    }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, 50px) scale(1.1); }
+    }
+
+    /* Main Container */
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
+      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 48px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.03), transparent);
+      transform: skewX(-20deg);
+      animation: shine 6s infinite;
+    }
+    
+    @keyframes shine {
+      0% { left: -100%; }
+      20% { left: 200%; }
+      100% { left: 200%; }
+    }
+
+    /* Logo & Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px; height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      font-size: 2rem;
+      font-weight: 800;
+      color: white;
+      box-shadow: 0 10px 25px rgba(234, 88, 12, 0.4);
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .logo-container::after {
+      content: ''; position: absolute; inset: -4px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      z-index: -1; filter: blur(12px); opacity: 0.6;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      background: linear-gradient(to right, #0f172a, #334155);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    p.subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    /* Features List */
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(0, 0, 0, 0.04);
       padding: 16px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
     }
-
-    .login-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: var(--radius-xl);
-      padding: 48px 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.05), 0 0 0 1px rgba(234,88,12,0.05);
+    
+    .feature-item:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateX(5px);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
     }
-
-    .login-logo {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 32px; justify-content: center;
-    }
-    .login-logo-mark {
-      width: 48px; height: 48px; border-radius: 14px;
-      background: linear-gradient(135deg, #f97316, #ea580c);
+    
+    .feature-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: rgba(139, 92, 246, 0.15);
+      color: #a855f7;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; font-weight: 900; color: white;
-      box-shadow: 0 8px 24px rgba(234, 88, 12, 0.3);
+      font-size: 1.1rem;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
     }
-    .login-logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; }
-    .login-logo-text span {
-      display: block; font-size: 0.75rem; font-weight: 600;
-      color: #ea580c; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px;
+    
+    .feature-item:nth-child(2) .feature-icon { background: rgba(56, 189, 248, 0.15); color: #38bdf8; box-shadow: 0 0 15px rgba(56,189,248,0.2); }
+    .feature-item:nth-child(3) .feature-icon { background: rgba(249, 115, 22, 0.15); color: #fb923c; box-shadow: 0 0 15px rgba(249,115,22,0.2); }
+    .feature-item:nth-child(4) .feature-icon { background: rgba(16, 185, 129, 0.15); color: #34d399; box-shadow: 0 0 15px rgba(16,185,129,0.2); }
+    
+    .feature-text {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #334155;
+      line-height: 1.4;
     }
-
-    .login-title {
-      text-align: center; margin-bottom: 8px;
-      font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: #0f172a;
-    }
-    .login-subtitle {
-      text-align: center; margin-bottom: 32px;
-      font-size: 0.85rem; color: #64748b; line-height: 1.5;
-    }
-
-    .test-credentials {
-      background: #ffedd5; border: 1px dashed #fdba74;
-      border-radius: var(--radius-md); padding: 12px 16px;
-      margin-bottom: 24px; font-size: 0.8rem; color: #9a3412;
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .test-credentials strong { color: #7c2d12; }
-
-    .form-group { margin-bottom: 20px; }
-    .form-label {
-      display: block; font-size: 0.75rem; font-weight: 700;
-      color: #475569; text-transform: uppercase;
-      letter-spacing: 0.05em; margin-bottom: 8px;
+    .feature-text strong {
+      color: #0f172a;
+      font-weight: 700;
     }
 
-    .login-btn {
-      width: 100%; padding: 14px;
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      color: white; border: none; border-radius: var(--radius-md);
-      font-size: 0.95rem; font-weight: 700; cursor: pointer;
-      transition: all 0.2s; letter-spacing: 0.02em;
-      margin-top: 8px;
-      box-shadow: 0 8px 24px rgba(234, 88, 12, 0.3);
+    /* Button */
+    .btn-glow {
+      position: relative;
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
-    .login-btn:hover:not(:disabled) {
+    
+    .btn-glow::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    
+    .btn-glow:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(234, 88, 12, 0.4);
+      box-shadow: 0 15px 30px rgba(234, 88, 12, 0.3), 0 0 20px rgba(139, 92, 246, 0.4);
     }
-    .login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    
+    .btn-glow:hover::before { opacity: 1; }
+    
+    .btn-text { position: relative; z-index: 1; }
+    
+    .btn-arrow {
+      position: relative; z-index: 1;
+      transition: transform 0.3s ease;
+    }
+    .btn-glow:hover .btn-arrow { transform: translateX(5px); }
 
-    .login-error {
-      background: #fee2e2; border: 1px solid #fca5a5;
-      border-radius: var(--radius-sm); padding: 12px 16px;
-      font-size: 0.85rem; color: #b91c1c; margin-bottom: 20px;
-      display: none; font-weight: 500;
-    }
-    .login-error.show { display: block; }
-
-    .login-footer {
-      text-align: center; margin-top: 32px;
-      font-size: 0.75rem; color: #94a3b8; font-weight: 500;
-    }
-
-    .spinner-inline {
-      display: inline-block; width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: white; border-radius: 50%;
-      animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="login-wrapper">
-    <div class="login-card">
-      <div class="login-logo">
-        <div class="login-logo-mark">A</div>
-        <div class="login-logo-text">AIONOS <span>Operations Control Room</span></div>
+  
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="container">
+    <div class="glass-card">
+      
+      <div class="header">
+        <div class="logo-container">A</div>
+        <h1>AIONOS</h1>
+        <p class="subtitle">Agentic AI Operations Control Room</p>
       </div>
 
-      <h1 class="login-title">Welcome back</h1>
-      <p class="login-subtitle">Sign in to monitor your AI agents and manage operational alerts across all departments.</p>
-
-      <!-- TEST CREDENTIALS BOX -->
-      <div class="test-credentials">
-        <div style="font-weight:700;margin-bottom:2px;text-transform:uppercase;font-size:0.7rem;letter-spacing:0.05em">Evaluation Credentials</div>
-        <div><strong>Email:</strong> anantsoni360@gmail.com</div>
-        <div><strong>Password:</strong> Anantsoni2005</div>
-      </div>
-
-      <div class="login-error" id="login-error"></div>
-
-      <form id="login-form" autocomplete="on">
-        <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input class="input" type="email" id="email" name="email"
-            placeholder="anantsoni360@gmail.com" value="anantsoni360@gmail.com" autocomplete="email" required />
+      <div class="features">
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-text"><strong>Real-time Monitoring</strong> of multi-department operations.</div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input class="input" type="password" id="password" name="password"
-            placeholder="••••••••" value="Anantsoni2005" autocomplete="current-password" required />
+        <div class="feature-item">
+          <div class="feature-icon">🤖</div>
+          <div class="feature-text"><strong>Agentic AI</strong> powers autonomous issue resolution.</div>
         </div>
-        <button class="login-btn" type="submit" id="login-btn">Sign In to Dashboard</button>
-      </form>
-
-      <div class="login-footer">
-        AIONOS v5.0 &nbsp;·&nbsp; Secured by Supabase Auth
+        <div class="feature-item">
+          <div class="feature-icon">👤</div>
+          <div class="feature-text"><strong>Human-in-the-loop</strong> for critical decision approvals.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔀</div>
+          <div class="feature-text"><strong>Multi-agent Orchestration</strong> for complex scenarios.</div>
+        </div>
       </div>
+
+      <button class="btn-glow" id="get-started-btn">
+        <span class="btn-text">Get Started</span>
+        <span class="btn-arrow">→</span>
+      </button>
+
     </div>
   </div>
 
   <script src="src/js/config.js"></script>
   <script>
-    const BASE = window.AIONOS_API_URL || "https://aionos-agentic-factory-production.up.railway.app";
+    const BASE = window.AIONOS_API_URL || "http://127.0.0.1:8000";
 
     // If already logged in, redirect to dashboard
     const token = localStorage.getItem("aionos_token");
     if (token) {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
         if (payload.exp * 1000 > Date.now()) {
           const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
           window.location.href = `${basePath}/`;
@@ -165,41 +308,10 @@
       } catch (_) {}
     }
 
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const btn   = document.getElementById("login-btn");
-      const error = document.getElementById("login-error");
-      const email    = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-inline"></span>Signing in…';
-      error.classList.remove("show");
-
-      try {
-        const res = await fetch(`${BASE}/api/auth/login`, {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.detail || "Login failed");
-        }
-
-        localStorage.setItem("aionos_token",         data.access_token);
-        localStorage.setItem("aionos_refresh_token",  data.refresh_token);
-        localStorage.setItem("aionos_user",           JSON.stringify(data.user));
-
-        const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
-        window.location.href = `${basePath}/`;
-      } catch (err) {
-        error.textContent = err.message || "Invalid credentials. Please try again.";
-        error.classList.add("show");
-        btn.disabled = false;
-        btn.textContent = "Sign In to Dashboard";
-      }
+    document.getElementById("get-started-btn").addEventListener("click", () => {
+      localStorage.setItem("aionos_token", "dummy.eyJleHAiOjI5OTk5OTk5OTl9.dummy");
+      const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
+      window.location.href = `${basePath}/`;
     });
   </script>
 </body>

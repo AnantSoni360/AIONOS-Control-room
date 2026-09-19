@@ -22,13 +22,14 @@ _DISPATCH = {
 }
 
 
-def run_agent(alert: dict, db: Client) -> dict:
+def run_agent(alert: dict, db: Client, provider: str = "mistral") -> dict:
     """
     Dispatch the correct department agent for an alert.
 
     Args:
-        alert: Full alert record dict (must include 'department' key).
-        db:    Supabase admin client.
+        alert:    Full alert record dict (must include 'department' key).
+        db:       Supabase admin client.
+        provider: LLM provider: \"mistral\" (default) or \"groq\".
 
     Returns:
         Agent result dict: {run_id, alert_id, department, final_message, steps, total_steps}
@@ -43,7 +44,8 @@ def run_agent(alert: dict, db: Client) -> dict:
             f"No agent registered for department '{department}'. "
             f"Supported: {list(_DISPATCH.keys())}"
         )
-    return runner(alert, db)
+    # Bug #3 fixed: pass provider through so it reaches create_agent_graph()
+    return runner(alert, db, provider=provider)
 
 
 __all__ = ["run_agent", "run_supervisor_agent"]

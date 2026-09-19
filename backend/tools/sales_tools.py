@@ -15,6 +15,13 @@ from langchain_core.tools import tool
 from supabase import Client
 
 _db: Client | None = None
+_run_id: str | None = None  # current run's ID, set by agent runner
+
+
+def set_run_id(run_id: str) -> None:
+    """Called by the agent runner to inject the current run_id before tool use."""
+    global _run_id
+    _run_id = run_id
 
 
 def set_db(client: Client) -> None:
@@ -30,12 +37,14 @@ def _now_iso() -> str:
 def get_deal(deal_id: int) -> str:
     """
     Fetch a single deal record and its associated contact information.
+    Pre-computes stall severity and recommends the correct SOP action tier.
 
     Args:
         deal_id: Primary key of the deal.
 
     Returns:
-        JSON with deal fields and contact details.
+        JSON with deal fields, contact details, and RECOMMENDED_ACTION field.
+        Note: deal value is in field 'value', win probability in 'probability'.
     """
     deal = _db.table("deals").select("*").eq("id", deal_id).execute().data
     if not deal:
@@ -44,6 +53,25 @@ def get_deal(deal_id: int) -> str:
 
     contact = _db.table("contacts").select("*").eq("id", deal["contact_id"]).execute().data
     deal["contact"] = contact[0] if contact else {}
+
+    # Pre-compute SOP tier so the LLM doesn't have to reason through it
+    days_stalled = int(deal.get("days_stalled") or 0)
+    deal_value = float(deal.get("value") or 0)
+    probability = float(deal.get("probability") or 0)
+
+    deal["computed_days_stalled"] = days_stalled
+    deal["computed_deal_value"] = deal_value
+    deal["computed_win_probability_pct"] = probability
+
+    if days_stalled > 45 or deal_value >= 100000:
+        deal["RECOMMENDED_ACTION"] = "ESCALATE_CRO: Call create_approval_request(risk_level='Critical') — >45 days stalled or high-value deal"
+    elif days_stalled >= 30 or deal_value >= 50000:
+        deal["RECOMMENDED_ACTION"] = "ESCALATE_MANAGER: Call create_approval_request(risk_level='High') — 30-44 days stalled or deal >$50k"
+    elif days_stalled >= 14:
+        deal["RECOMMENDED_ACTION"] = "AUTO_NUDGE: Call schedule_followup() — 14-29 days stalled, autonomous action allowed"
+    else:
+        deal["RECOMMENDED_ACTION"] = "MONITOR: Deal stalled <14 days, log and monitor"
+
     return json.dumps(deal, default=str)
 
 
@@ -198,6 +226,7 @@ def write_audit_log(
         "step_index": step_index,
         "timestamp": _now_iso(),
         "is_human_action": False,
+        "run_id": _run_id,  # link log entries to the run for Observatory traces
     }
     _db.table("audit_logs").insert(row).execute()
     return json.dumps({"logged": True, "action": action})

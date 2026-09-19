@@ -12,47 +12,36 @@ from supabase import Client
 
 from agents.base_agent import create_agent_graph, extract_result
 from rag.retriever import retrieve_policy
-from tools.hr_tools import HR_TOOLS, set_db
+from tools.hr_tools import HR_TOOLS, set_db, set_run_id
 
-HR_SYSTEM_PROMPT = """You are the AIONOS HR Agent, an autonomous AI assistant
-for the Human Resources department of AIONOS Enterprise.
+HR_SYSTEM_PROMPT = """You are the AIONOS HR Agent. Your job is to investigate an onboarding blocker alert and take exactly ONE action.
 
-Your role is to investigate and resolve employee onboarding blockers according to the HR SOP.
+## MANDATORY WORKFLOW — follow these steps in order:
 
-## Your Decision Framework (HR SOP v3.1)
+STEP 1: Call get_employee(employee_id=<related_record_id from alert>)
+STEP 2: Read the RECOMMENDED_ACTION field in the response. It tells you exactly what to do.
+STEP 3: Execute that action NOW:
+  - If RECOMMENDED_ACTION starts with "ESCALATE_CPO" → call create_approval_request(risk_level="Critical")
+  - If RECOMMENDED_ACTION starts with "ESCALATE_LEGAL" → call create_approval_request(risk_level="High")
+  - If RECOMMENDED_ACTION starts with "AUTO_IT" → call unblock_task() for the blocked IT task
+  - If RECOMMENDED_ACTION starts with "AUTO_ESCALATE" → call escalate_onboarding()
+STEP 4: Call write_audit_log() with the action you took and why.
 
-### IT BLOCKERS (section 2.1):
-- Laptop not provisioned by Day 0: must resolve within 4h
-- VPN/software: IT has 8h to resolve
-- System access failures: 2 business hour SLA
-- Action: write_audit_log() documenting the IT ticket raised
-
-### LEGAL BLOCKERS (section 2.2):
-- Unsigned NDA after Day 1 OR IP agreement after Day 2
-- Background check delay > 5 days: notify Legal, grant provisional clearance
-- Action: write_audit_log() with DocuSign reminder and Legal notified
-
-### MANAGER BLOCKERS (section 2.3):
-- Manager approval pending > 24h: send escalation
-- Manager OOO: delegate to department head
-- Action: write_audit_log() with new approver identified
-
-### CRITICAL ESCALATION - CPO REQUIRED (section 3):
-- Employee blocked for more than 5 business days
-- C-suite or VP-level hire with any blocker
-- Background check with disqualifying finding
-- Action: create_approval_request(risk_level="Critical") then escalate_onboarding()
-
-## Mandatory Steps:
-1. Call get_employee() first
-2. Identify blocker type (IT / Legal / Manager / Facilities)
-3. Execute action or escalate
-4. Always end with write_audit_log()
+## CRITICAL RULES:
+- You MUST call create_approval_request() when RECOMMENDED_ACTION says ESCALATE. Never skip this.
+- You MUST call write_audit_log() as your last action. Always.
+- Do NOT explain what you are going to do without calling a tool. Just call the tools.
 """
 
 
-def run_hr_agent(alert: dict, db: Client) -> dict:
-    """Run the HR Agent on a given alert."""
+def run_hr_agent(alert: dict, db: Client, provider: str = "mistral") -> dict:
+    """Run the HR Agent on a given alert.
+
+    Args:
+        alert:    Full alert record dict.
+        db:       Supabase admin client.
+        provider: LLM provider to use: \"mistral\" (default) or \"groq\".
+    """
     set_db(db)
 
     policy_context = retrieve_policy(
@@ -62,7 +51,9 @@ def run_hr_agent(alert: dict, db: Client) -> dict:
     )
 
     run_id = str(uuid.uuid4())
-    graph = create_agent_graph(HR_TOOLS, HR_SYSTEM_PROMPT, policy_context)
+    set_run_id(run_id)  # inject run_id into tools so audit_logs are linked
+    # Bug #3 fixed: pass provider so the caller's selection is honoured
+    graph = create_agent_graph(HR_TOOLS, HR_SYSTEM_PROMPT, policy_context, provider=provider)
 
     user_prompt = (
         f"You have been triggered to investigate the following HR alert:\n\n"
@@ -92,4 +83,16 @@ def run_hr_agent(alert: dict, db: Client) -> dict:
 
     final_state = graph.invoke(initial_state)
     final_state["run_id"] = run_id
+
+    # ── Post-run: finalize alert status ────────────────────────────────────────
+    current = db.table("alerts").select("status").eq("id", alert["id"]).execute()
+    current_status = current.data[0]["status"] if current.data else "In_Progress"
+    if current_status == "In_Progress":
+        now = datetime.now(timezone.utc).isoformat()
+        db.table("alerts").update({
+            "status": "Resolved",
+            "resolved_at": now,
+            "updated_at": now,
+        }).eq("id", alert["id"]).execute()
+
     return extract_result(final_state)

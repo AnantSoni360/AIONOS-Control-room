@@ -22,12 +22,14 @@ import google.generativeai as genai
 
 load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from database.db import supabase_admin as db
+from database.db import get_admin
 
 DOCS_DIR = Path(__file__).parent / "documents"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 80
-EMBED_MODEL = "models/gemini-embedding-2"
+# Bug #8 fixed: correct model name (was "models/gemini-embedding-2")
+EMBED_MODEL = "models/text-embedding-004"
+EMBED_DIM   = 768   # text-embedding-004 default output dimensions
 EMBED_BATCH_DELAY = 0.3
 
 DEPARTMENT_MAP = {
@@ -52,11 +54,12 @@ def chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) 
 
 
 def embed(text: str) -> list:
-    """Embed a single text string using Google text-embedding-004."""
+    """Embed a single text string using Google text-embedding-004 (768 dims)."""
     result = genai.embed_content(
         model=EMBED_MODEL,
         content=text,
         task_type="RETRIEVAL_DOCUMENT",
+        output_dimensionality=EMBED_DIM,
     )
     return result["embedding"]
 
@@ -71,6 +74,8 @@ def run():
     print(f"Using embed model: {EMBED_MODEL}")
     print(f"Chunk size: {CHUNK_SIZE} chars | Overlap: {CHUNK_OVERLAP} chars\n")
 
+    # Bug #1 fixed: use get_admin() lazily rather than a module-level import
+    db = get_admin()
     total_chunks = 0
 
     for filename, department in DEPARTMENT_MAP.items():

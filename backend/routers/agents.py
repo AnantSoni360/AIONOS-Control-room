@@ -12,16 +12,22 @@ from supabase import Client
 
 from database.db import get_admin
 from agents import run_agent
+from middleware.auth import require_auth
 
 router = APIRouter(prefix="/api/agents", tags=["Agents"])
 
 
 class AgentRunRequest(BaseModel):
     alert_id: int
+    provider: str = "groq"   # switched to groq (mistral rate-limited)
 
 
 @router.post("/run")
-def trigger_agent(body: AgentRunRequest, db: Client = Depends(get_admin)):
+def trigger_agent(
+    body: AgentRunRequest,
+    db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
+):
     """
     Trigger the appropriate department LangGraph agent on an alert.
 
@@ -47,7 +53,7 @@ def trigger_agent(body: AgentRunRequest, db: Client = Depends(get_admin)):
         )
 
     try:
-        agent_result = run_agent(alert, db)
+        agent_result = run_agent(alert, db, provider=body.provider)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
@@ -72,7 +78,11 @@ def trigger_agent(body: AgentRunRequest, db: Client = Depends(get_admin)):
 
 
 @router.get("/trace/{run_id}")
-def get_trace(run_id: str, db: Client = Depends(get_admin)):
+def get_trace(
+    run_id: str,
+    db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
+):
     """
     Retrieve all audit log entries for a specific agent run.
 

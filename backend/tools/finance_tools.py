@@ -18,6 +18,13 @@ from supabase import Client
 # Module-level Supabase client - injected at agent startup via set_db()
 # ---------------------------------------------------------------------------
 _db: Client | None = None
+_run_id: str | None = None  # current run's ID, set by agent runner
+
+
+def set_run_id(run_id: str) -> None:
+    """Called by the agent runner to inject the current run_id before tool use."""
+    global _run_id
+    _run_id = run_id
 
 
 def set_db(client: Client) -> None:
@@ -38,12 +45,14 @@ def _now_iso() -> str:
 def get_invoice(invoice_id: int) -> str:
     """
     Fetch a single invoice record together with its supplier information.
+    Pre-computes the mismatch percentage and recommends an action tier.
 
     Args:
         invoice_id: Primary key of the invoice to retrieve.
 
     Returns:
-        JSON string with invoice details and supplier name/contact/credit_limit.
+        JSON string with invoice details, supplier info, pre-computed mismatch %,
+        and a RECOMMENDED_ACTION field telling you exactly what to do next.
     """
     inv = _db.table("invoices").select("*").eq("id", invoice_id).execute().data
     if not inv:
@@ -53,6 +62,30 @@ def get_invoice(invoice_id: int) -> str:
     sup = _db.table("suppliers").select("name,contact_email,credit_limit,payment_terms") \
              .eq("id", inv["supplier_id"]).execute().data
     inv["supplier"] = sup[0] if sup else {}
+
+    # Pre-compute mismatch so the LLM doesn't have to do math
+    invoice_amount = float(inv.get("amount") or 0)
+    po_amount = float(inv.get("po_amount") or 1)
+    mismatch_amount = float(inv.get("mismatch_amount") or abs(invoice_amount - po_amount))
+    mismatch_pct = (mismatch_amount / po_amount * 100) if po_amount else 0
+
+    inv["computed_invoice_amount"] = invoice_amount
+    inv["computed_mismatch_pct"] = round(mismatch_pct, 2)
+    inv["computed_mismatch_abs"] = round(mismatch_amount, 2)
+
+    # Determine recommended action tier based on Finance SOP v2.4
+    mismatch_reason = (inv.get("mismatch_reason") or "").lower()
+    if "currency" in mismatch_reason or "duplicate" in mismatch_reason or "missing po" in mismatch_reason:
+        inv["RECOMMENDED_ACTION"] = "ESCALATE_CFO: Call create_approval_request(risk_level='Critical')"
+    elif mismatch_pct > 10 or mismatch_amount > 5000:
+        inv["RECOMMENDED_ACTION"] = "ESCALATE_CFO: Call create_approval_request(risk_level='Critical')"
+    elif mismatch_pct > 2 or mismatch_amount > 500:
+        inv["RECOMMENDED_ACTION"] = "ESCALATE_SENIOR_AP: Call create_approval_request(risk_level='High')"
+    elif invoice_amount == 0:
+        inv["RECOMMENDED_ACTION"] = "ESCALATE_CFO: Invoice amount missing - Call create_approval_request(risk_level='Critical')"
+    else:
+        inv["RECOMMENDED_ACTION"] = "AUTO_APPROVE: Call approve_invoice() - mismatch within threshold"
+
     return json.dumps(inv, default=str)
 
 
@@ -194,6 +227,7 @@ def write_audit_log(
         "step_index": step_index,
         "timestamp": _now_iso(),
         "is_human_action": False,
+        "run_id": _run_id,  # link log entries to the run for Observatory traces
     }
     _db.table("audit_logs").insert(row).execute()
     return json.dumps({"logged": True, "action": action})

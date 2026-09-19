@@ -12,46 +12,37 @@ from supabase import Client
 
 from agents.base_agent import create_agent_graph, extract_result
 from rag.retriever import retrieve_policy
-from tools.sales_tools import SALES_TOOLS, set_db
+from tools.sales_tools import SALES_TOOLS, set_db, set_run_id
 
-SALES_SYSTEM_PROMPT = """You are the AIONOS Sales Agent, an autonomous AI assistant
-for the Sales & Alliances department of AIONOS Enterprise.
+SALES_SYSTEM_PROMPT = """You are the AIONOS Sales Agent. Your job is to investigate a stalled deal alert and take exactly ONE action.
 
-Your role is to investigate stalled deals and execute recovery actions per Sales SOP.
+## MANDATORY WORKFLOW — follow these steps in order:
 
-## Your Decision Framework (Sales SOP v1.8)
+STEP 1: Call get_deal(deal_id=<related_record_id from alert>)
+STEP 2: Read the RECOMMENDED_ACTION field in the response. It tells you exactly what to do.
+STEP 3: Execute that action NOW:
+  - If RECOMMENDED_ACTION starts with "ESCALATE_CRO" → call create_approval_request(risk_level="Critical")
+  - If RECOMMENDED_ACTION starts with "ESCALATE_MANAGER" → call create_approval_request(risk_level="High")
+  - If RECOMMENDED_ACTION starts with "AUTO_NUDGE" → call schedule_followup()
+  - If RECOMMENDED_ACTION starts with "MONITOR" → call write_audit_log() only
+STEP 4: Call write_audit_log() with the action you took and why.
 
-### STAGE 1 - AUTOMATED NUDGE (14-29 days stalled, section 2.1):
-- You CAN act autonomously
-- Call schedule_followup() to send automated reminder
-- Call write_audit_log()
-
-### STAGE 2 - MANAGER ALERT (30-44 days stalled, section 2.2):
-- Notify Sales Manager, consider stage downgrade if probability < 30%
-- Call create_approval_request(risk_level="High") if reassignment needed
-- Call write_audit_log()
-
-### STAGE 3 - CRO ESCALATION (> 45 days stalled, CRITICAL, section 2.3):
-- You MUST escalate - no autonomous status changes
-- Call create_approval_request(risk_level="Critical") with full deal brief
-- Call write_audit_log()
-
-### HIGH-RISK FLAGS (always flag):
-- Expected close date has already passed
-- Win probability < 20%
-- Deal value >= $50,000 (manager approval for reassignment)
-- Deal value >= $100,000 (VP co-approval required)
-
-## Mandatory Steps:
-1. Call get_deal() first
-2. Check days_stalled and win_probability
-3. Execute appropriate action
-4. Always end with write_audit_log()
+## CRITICAL RULES:
+- You MUST call create_approval_request() when RECOMMENDED_ACTION says ESCALATE. Never skip this.
+- You MUST call write_audit_log() as your last action. Always.
+- Do NOT explain what you are going to do without calling a tool. Just call the tools.
+- Deal value is in the 'value' field. Win probability is in the 'probability' field.
 """
 
 
-def run_sales_agent(alert: dict, db: Client) -> dict:
-    """Run the Sales Agent on a given alert."""
+def run_sales_agent(alert: dict, db: Client, provider: str = "mistral") -> dict:
+    """Run the Sales Agent on a given alert.
+
+    Args:
+        alert:    Full alert record dict.
+        db:       Supabase admin client.
+        provider: LLM provider to use: \"mistral\" (default) or \"groq\".
+    """
     set_db(db)
 
     policy_context = retrieve_policy(
@@ -61,7 +52,9 @@ def run_sales_agent(alert: dict, db: Client) -> dict:
     )
 
     run_id = str(uuid.uuid4())
-    graph = create_agent_graph(SALES_TOOLS, SALES_SYSTEM_PROMPT, policy_context)
+    set_run_id(run_id)  # inject run_id into tools so audit_logs are linked
+    # Bug #3 fixed: pass provider so the caller's selection is honoured
+    graph = create_agent_graph(SALES_TOOLS, SALES_SYSTEM_PROMPT, policy_context, provider=provider)
 
     user_prompt = (
         f"You have been triggered to investigate the following Sales alert:\n\n"
@@ -91,4 +84,16 @@ def run_sales_agent(alert: dict, db: Client) -> dict:
 
     final_state = graph.invoke(initial_state)
     final_state["run_id"] = run_id
+
+    # ── Post-run: finalize alert status ────────────────────────────────────────
+    current = db.table("alerts").select("status").eq("id", alert["id"]).execute()
+    current_status = current.data[0]["status"] if current.data else "In_Progress"
+    if current_status == "In_Progress":
+        now = datetime.now(timezone.utc).isoformat()
+        db.table("alerts").update({
+            "status": "Resolved",
+            "resolved_at": now,
+            "updated_at": now,
+        }).eq("id", alert["id"]).execute()
+
     return extract_result(final_state)

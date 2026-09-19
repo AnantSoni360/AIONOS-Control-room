@@ -14,6 +14,13 @@ from langchain_core.tools import tool
 from supabase import Client
 
 _db: Client | None = None
+_run_id: str | None = None  # current run's ID, set by agent runner
+
+
+def set_run_id(run_id: str) -> None:
+    """Called by the agent runner to inject the current run_id before tool use."""
+    global _run_id
+    _run_id = run_id
 
 
 def set_db(client: Client) -> None:
@@ -29,12 +36,13 @@ def _now_iso() -> str:
 def get_employee(employee_id: int) -> str:
     """
     Fetch a single employee record and all their onboarding tasks.
+    Pre-classifies the blocker type and recommends the correct SOP action.
 
     Args:
         employee_id: Primary key of the employee.
 
     Returns:
-        JSON with employee fields and a list of onboarding_tasks.
+        JSON with employee fields, onboarding_tasks, and RECOMMENDED_ACTION field.
     """
     emp = _db.table("employees").select("*").eq("id", employee_id).execute().data
     if not emp:
@@ -44,6 +52,29 @@ def get_employee(employee_id: int) -> str:
     tasks = _db.table("onboarding_tasks").select("*").eq("employee_id", employee_id) \
                .order("due_date").execute().data
     emp["onboarding_tasks"] = tasks
+
+    # Pre-classify blocker type and determine action tier
+    blocked_tasks = [t for t in tasks if t.get("status") == "blocked"]
+    categories = {t.get("category", "").lower() for t in blocked_tasks}
+
+    start_date_str = emp.get("start_date", "")
+    role = (emp.get("role") or "").lower()
+    is_cxo = any(x in role for x in ["vp", "cxo", "cto", "cfo", "coo", "cpo", "director", "c-suite"])
+
+    if is_cxo or len(blocked_tasks) >= 3:
+        emp["RECOMMENDED_ACTION"] = "ESCALATE_CPO: Call create_approval_request(risk_level='Critical') — C-suite hire or multiple blockers"
+    elif "legal" in categories or "background" in categories:
+        emp["RECOMMENDED_ACTION"] = "ESCALATE_LEGAL: Call create_approval_request(risk_level='High') — Legal/background check blocker"
+    elif "it" in categories or "access" in categories:
+        emp["RECOMMENDED_ACTION"] = "AUTO_IT: Call unblock_task() to raise IT ticket — IT provisioning blocker, autonomous action allowed"
+    elif blocked_tasks:
+        emp["RECOMMENDED_ACTION"] = "AUTO_ESCALATE: Call escalate_onboarding() to notify manager — general onboarding blocker"
+    else:
+        emp["RECOMMENDED_ACTION"] = "MONITOR: No blocked tasks found"
+
+    emp["computed_blocked_task_count"] = len(blocked_tasks)
+    emp["computed_blocker_categories"] = list(categories)
+
     return json.dumps(emp, default=str)
 
 
@@ -211,6 +242,7 @@ def write_audit_log(
         "step_index": step_index,
         "timestamp": _now_iso(),
         "is_human_action": False,
+        "run_id": _run_id,  # link log entries to the run for Observatory traces
     }
     _db.table("audit_logs").insert(row).execute()
     return json.dumps({"logged": True, "action": action})

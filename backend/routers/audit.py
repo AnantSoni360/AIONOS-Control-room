@@ -7,6 +7,7 @@ from typing import Optional
 from supabase import Client
 
 from database.db import get_admin
+from middleware.auth import require_auth
 
 router = APIRouter(prefix="/api/audit", tags=["Audit"])
 
@@ -17,15 +18,19 @@ def list_audit_logs(
     department:     Optional[str]  = Query(None),
     agent_name:     Optional[str]  = Query(None),
     is_human_action:Optional[bool] = Query(None),
+    run_id:         Optional[str]  = Query(None),
     limit: int = Query(100, le=500),
     offset: int = Query(0),
     db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
 ):
-    """List audit log entries with optional filters."""
+    """List audit log entries with optional filters including run_id for trace lookup."""
     q = db.table("audit_logs").select("*")
 
     if alert_id:
         q = q.eq("alert_id", alert_id)
+    if run_id:
+        q = q.eq("run_id", run_id)
     if agent_name:
         q = q.eq("agent_name", agent_name)
     if is_human_action is not None:

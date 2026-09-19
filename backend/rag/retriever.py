@@ -11,32 +11,53 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-import google.generativeai as genai
+# Migrated from deprecated google.generativeai to google.genai
+try:
+    import google.genai as genai
+    _NEW_SDK = True
+except ImportError:
+    import google.generativeai as genai  # type: ignore
+    _NEW_SDK = False
 
 load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from database.db import supabase_admin as db
+from database.db import get_admin
 
-EMBED_MODEL = "models/gemini-embedding-2"
+# Bug #8 fixed: correct model name (was "models/gemini-embedding-2")
+EMBED_MODEL = "models/text-embedding-004"
 _configured = False
 
 
 def _ensure_configured():
     global _configured
     if not _configured:
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
+        api_key = os.getenv("GOOGLE_API_KEY", "")
+        if _NEW_SDK:
+            # new SDK — client is created per-call; configure is not needed
+            pass
+        else:
+            genai.configure(api_key=api_key)
         _configured = True
 
 
 def _embed_query(text: str) -> list:
     """Embed a query string for retrieval."""
     _ensure_configured()
-    result = genai.embed_content(
-        model=EMBED_MODEL,
-        content=text,
-        task_type="RETRIEVAL_QUERY",
-    )
-    return result["embedding"]
+    api_key = os.getenv("GOOGLE_API_KEY", "")
+    if _NEW_SDK:
+        client = genai.Client(api_key=api_key)
+        result = client.models.embed_content(
+            model=EMBED_MODEL,
+            contents=text,
+        )
+        return result.embeddings[0].values
+    else:
+        result = genai.embed_content(
+            model=EMBED_MODEL,
+            content=text,
+            task_type="RETRIEVAL_QUERY",
+        )
+        return result["embedding"]
 
 
 def retrieve_policy(query: str, department: str, k: int = 3) -> str:
@@ -56,6 +77,8 @@ def retrieve_policy(query: str, department: str, k: int = 3) -> str:
         Returns empty string if pgvector is not set up or no chunks are found.
     """
     try:
+        # Bug #1 fixed: use get_admin() lazily rather than a module-level import
+        db = get_admin()
         query_embedding = _embed_query(query)
 
         result = db.rpc("match_sop_chunks", {
@@ -91,6 +114,7 @@ def retrieve_policy_raw(query: str, department: str, k: int = 3) -> list:
     Useful for debugging.
     """
     try:
+        db = get_admin()
         query_embedding = _embed_query(query)
         result = db.rpc("match_sop_chunks", {
             "query_embedding": query_embedding,

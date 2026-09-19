@@ -109,9 +109,10 @@ def _delegate(dept: str, alert_id: int, parent_run_id: str) -> str:
         return f"Alert #{alert_id} not found."
     alert = res.data[0]
 
-    # Create task row
+    # Create task row — include all required fields (parent_dept is required by schema)
     task_id_row = _db.table("agent_tasks").insert({
         "parent_run_id": parent_run_id,
+        "parent_dept":   "Supervisor",
         "child_dept":    dept,
         "alert_id":      alert_id,
         "status":        "running",
@@ -122,20 +123,24 @@ def _delegate(dept: str, alert_id: int, parent_run_id: str) -> str:
 
     try:
         result = runner(alert, _db)
-        child_run_id = result.get("run_id", "")
+        child_run_id = result.get("run_id", "") or ""
         summary = result.get("final_message", "")[:300]
 
         if task_db_id:
-            _db.table("agent_tasks").update({
+            update_payload = {
                 "status":         "done",
-                "child_run_id":   child_run_id,
                 "completed_at":   datetime.now(timezone.utc).isoformat(),
                 "result_summary": summary,
-            }).eq("id", task_db_id).execute()
+            }
+            # child_run_id is a UUID column — only set if it looks like a UUID
+            if child_run_id and len(child_run_id) == 36:
+                update_payload["child_run_id"] = child_run_id
+            _db.table("agent_tasks").update(update_payload).eq("id", task_db_id).execute()
 
+        short_run = child_run_id[:8] + "..." if len(child_run_id) >= 8 else child_run_id
         return (
             f"{dept}Agent completed for Alert #{alert_id}.\n"
-            f"Steps: {result.get('total_steps', 0)} | Run ID: {child_run_id[:8]}...\n"
+            f"Steps: {result.get('total_steps', 0)} | Run ID: {short_run}\n"
             f"Outcome: {summary}"
         )
     except Exception as e:

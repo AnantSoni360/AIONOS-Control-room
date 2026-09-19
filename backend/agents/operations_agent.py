@@ -12,45 +12,35 @@ from supabase import Client
 
 from agents.base_agent import create_agent_graph, extract_result
 from rag.retriever import retrieve_policy
-from tools.operations_tools import OPERATIONS_TOOLS, set_db
+from tools.operations_tools import OPERATIONS_TOOLS, set_db, set_run_id
 
-OPERATIONS_SYSTEM_PROMPT = """You are the AIONOS Operations Agent, an autonomous AI assistant
-for the Operations department of AIONOS Enterprise.
+OPERATIONS_SYSTEM_PROMPT = """You are the AIONOS Operations Agent. Your job is to investigate an SLA breach alert and take exactly ONE action.
 
-Your role is to investigate supplier SLA breaches and enforce contract penalties per Operations SOP.
+## MANDATORY WORKFLOW — follow these steps in order:
 
-## Your Decision Framework (Operations SOP v2.0)
+STEP 1: Call get_shipment(shipment_id=<related_record_id from alert>)
+STEP 2: Read the RECOMMENDED_ACTION field in the response. It tells you exactly what to do.
+STEP 3: Execute that action NOW:
+  - If RECOMMENDED_ACTION starts with "ESCALATE_COO" → call calculate_and_apply_penalty() THEN call create_approval_request(risk_level="Critical")
+  - If RECOMMENDED_ACTION starts with "ESCALATE_PROCUREMENT" → call calculate_and_apply_penalty() THEN call create_approval_request(risk_level="High")
+  - If RECOMMENDED_ACTION starts with "AUTO_PENALTY" → call calculate_and_apply_penalty() THEN call flag_sla_breach()
+STEP 4: Call write_audit_log() with the action you took and why.
 
-### MINOR BREACH (1-3 days delayed, section 2.1):
-- You CAN act autonomously
-- Call calculate_and_apply_penalty() then flag_sla_breach()
-- Log supplier notification via write_audit_log()
-
-### MODERATE BREACH (4-7 days delayed, section 2.2):
-- Calculate penalty: days_delayed * penalty_per_day, capped at max_penalty
-- Call calculate_and_apply_penalty()
-- Call create_approval_request(risk_level="High") for Procurement Manager
-
-### MAJOR BREACH (8-14 days delayed, section 2.3):
-- Call calculate_and_apply_penalty()
-- Call create_approval_request(risk_level="Critical") for COO approval
-
-### CRITICAL BREACH (> 14 days OR cargo value > $100,000, section 2.4):
-- AGENT MUST ESCALATE - NO autonomous action permitted
-- Call create_approval_request(risk_level="Critical") with full incident report
-- Call write_audit_log()
-
-## Mandatory Steps:
-1. Call get_shipment() first to get contract terms
-2. Calculate severity: 1-3 minor, 4-7 moderate, 8-14 major, >14 critical
-3. Also check cargo_value - if > $100,000 always critical
-4. Execute appropriate action
-5. Always end with write_audit_log()
+## CRITICAL RULES:
+- You MUST call create_approval_request() when RECOMMENDED_ACTION says ESCALATE. Never skip this.
+- You MUST call write_audit_log() as your last action. Always.
+- Do NOT explain what you are going to do without calling a tool. Just call the tools.
 """
 
 
-def run_operations_agent(alert: dict, db: Client) -> dict:
-    """Run the Operations Agent on a given alert."""
+def run_operations_agent(alert: dict, db: Client, provider: str = "mistral") -> dict:
+    """Run the Operations Agent on a given alert.
+
+    Args:
+        alert:    Full alert record dict.
+        db:       Supabase admin client.
+        provider: LLM provider to use: \"mistral\" (default) or \"groq\".
+    """
     set_db(db)
 
     policy_context = retrieve_policy(
@@ -60,7 +50,9 @@ def run_operations_agent(alert: dict, db: Client) -> dict:
     )
 
     run_id = str(uuid.uuid4())
-    graph = create_agent_graph(OPERATIONS_TOOLS, OPERATIONS_SYSTEM_PROMPT, policy_context)
+    set_run_id(run_id)  # inject run_id into tools so audit_logs are linked
+    # Bug #3 fixed: pass provider so the caller's selection is honoured
+    graph = create_agent_graph(OPERATIONS_TOOLS, OPERATIONS_SYSTEM_PROMPT, policy_context, provider=provider)
 
     user_prompt = (
         f"You have been triggered to investigate the following Operations alert:\n\n"
@@ -91,4 +83,16 @@ def run_operations_agent(alert: dict, db: Client) -> dict:
 
     final_state = graph.invoke(initial_state)
     final_state["run_id"] = run_id
+
+    # ── Post-run: finalize alert status ────────────────────────────────────────
+    current = db.table("alerts").select("status").eq("id", alert["id"]).execute()
+    current_status = current.data[0]["status"] if current.data else "In_Progress"
+    if current_status == "In_Progress":
+        now = datetime.now(timezone.utc).isoformat()
+        db.table("alerts").update({
+            "status": "Resolved",
+            "resolved_at": now,
+            "updated_at": now,
+        }).eq("id", alert["id"]).execute()
+
     return extract_result(final_state)

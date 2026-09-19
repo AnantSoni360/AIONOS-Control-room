@@ -23,7 +23,7 @@ load_dotenv()
 from config import settings               # validate env vars on import
 from database.db import test_connection
 from middleware.rate_limit import limiter
-from routers import alerts, audit, approvals, agents, stream, supervisor
+from routers import alerts, audit, approvals, agents, stream, supervisor, limits
 from routers import auth as auth_router
 
 app = FastAPI(
@@ -45,7 +45,7 @@ app.add_middleware(SlowAPIMiddleware)
 # ── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:80", "*"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:80", "http://127.0.0.1:3000", "http://127.0.0.1:8000", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,6 +59,7 @@ app.include_router(approvals.router)
 app.include_router(agents.router)
 app.include_router(stream.router)
 app.include_router(supervisor.router)
+app.include_router(limits.router)
 
 # ── Frontend static files ─────────────────────────────────────────────────────
 _frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")

@@ -19,46 +19,27 @@ from agents.base_agent import create_agent_graph, extract_result
 from rag.retriever import retrieve_policy
 from tools.supervisor_tools import SUPERVISOR_TOOLS, set_db
 
-SUPERVISOR_SYSTEM_PROMPT = """You are the AIONOS Supervisor Agent -- a senior AI
-orchestrator that coordinates the four department AI agents (Finance, HR, Sales,
-Operations) to resolve complex, cross-department operational issues.
+SUPERVISOR_SYSTEM_PROMPT = """You are the AIONOS Supervisor Agent. Your job is to orchestrate department agents on a Critical alert.
 
-## Your Mission
-When a Critical alert involves multiple departments or a high-value entity,
-you must assess the full picture and coordinate a unified response.
+## MANDATORY WORKFLOW — follow these steps in order:
 
-## Your Orchestration Process
+STEP 1: Call get_alert_details(alert_id=<alert_id from prompt>)
+STEP 2: Call get_related_alerts(record_id=<related_record_id>, record_type=<related_record_type>)
+STEP 3: Based on the alert department, call the matching delegation tool:
+  - Finance alert → call delegate_to_finance(alert_id=<id>, parent_run_id=<Your Supervisor Run ID>)
+  - HR alert → call delegate_to_hr(alert_id=<id>, parent_run_id=<Your Supervisor Run ID>)
+  - Sales alert → call delegate_to_sales(alert_id=<id>, parent_run_id=<Your Supervisor Run ID>)
+  - Operations alert → call delegate_to_operations(alert_id=<id>, parent_run_id=<Your Supervisor Run ID>)
+  - If related alerts exist for OTHER departments, delegate to those agents too.
+STEP 4: If any sub-agent outcome mentions "approval" or "Critical":
+  - Call create_cross_dept_escalation(alert_id=<id>, departments_involved=<list>, action_requested=<summary>, context_summary=<findings>, risk_level="Critical")
+STEP 5: ALWAYS end by calling write_supervisor_log(alert_id=<id>, run_id=<Your Supervisor Run ID>, action="orchestration_complete", details=<full summary of all delegations and outcomes>)
 
-### Step 1 -- Assess Cross-Department Impact
-- Call get_alert_details(alert_id) on the originating alert
-- Call get_related_alerts(record_id, record_type) to find linked alerts
-- Determine which departments are affected
-
-### Step 2 -- Plan the Delegation Order
-- Prioritise by severity and dependency
-- Finance first if monetary risk is highest
-- Operations if supply chain is disrupted
-- HR if personnel are blocked
-- Sales if deal revenue is at risk
-
-### Step 3 -- Delegate (in order)
-- Call delegate_to_finance / delegate_to_hr / delegate_to_sales / delegate_to_operations
-  for each affected alert, passing the parent_run_id for tree tracking
-- Wait for each result before proceeding (sequential delegation)
-
-### Step 4 -- Synthesise and Escalate
-- If any sub-agent requested approval OR total combined risk is Critical:
-  Call create_cross_dept_escalation() with a concise summary of all findings
-- If all issues resolved autonomously: log the outcome
-
-### Step 5 -- Always End With
-- Call write_supervisor_log(action="orchestration_complete", details=<full_summary>)
-
-## Decision Rules
-- NEVER skip write_supervisor_log at the end
-- NEVER delegate the same alert_id twice
-- If a sub-agent fails, still complete the other delegations
-- Always pass your run_id as parent_run_id to delegation tools
+## CRITICAL RULES:
+- The "Your Supervisor Run ID" is provided in the prompt — use it EXACTLY as the parent_run_id.
+- You MUST call at least one delegate_to_X() tool. Never skip delegation.
+- You MUST call write_supervisor_log() as your final action. Always.
+- Do NOT explain what you are going to do without calling a tool. Just call the tools.
 """
 
 
@@ -134,4 +115,18 @@ def run_supervisor_agent(
     final_state["run_id"] = run_id
     result = extract_result(final_state)
     result["supervisor_run_id"] = run_id
+
+    # ── Post-run: finalize alert status ────────────────────────────────────────
+    # Sub-department agents may have already set Pending_Approval; only mark
+    # Resolved if the status is still In_Progress (all autonomous resolution).
+    current = db.table("alerts").select("status").eq("id", alert["id"]).execute()
+    current_status = current.data[0]["status"] if current.data else "In_Progress"
+    if current_status == "In_Progress":
+        now = datetime.now(timezone.utc).isoformat()
+        db.table("alerts").update({
+            "status":      "Resolved",
+            "resolved_at": now,
+            "updated_at":  now,
+        }).eq("id", alert["id"]).execute()
+
     return result

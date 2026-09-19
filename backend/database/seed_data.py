@@ -8,8 +8,9 @@ Run AFTER executing schema.sql in Supabase SQL Editor.
 import random
 from datetime import datetime, timedelta, timezone
 from faker import Faker
-from database.db import supabase_admin as supabase
+from database.db import get_admin
 
+supabase = get_admin()
 fake = Faker()
 random.seed(42)
 Faker.seed(42)

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from supabase import Client
 
 from database.db import get_admin
+from middleware.auth import require_auth
 
 router = APIRouter(prefix="/api/approvals", tags=["Approvals"])
 
@@ -22,6 +23,7 @@ class ApprovalDecision(BaseModel):
 def list_approvals(
     status: Optional[str] = "pending",
     db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
 ):
     """List approval requests."""
     q = db.table("approval_requests").select("*")
@@ -32,7 +34,11 @@ def list_approvals(
 
 
 @router.get("/{approval_id}")
-def get_approval(approval_id: int, db: Client = Depends(get_admin)):
+def get_approval(
+    approval_id: int,
+    db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
+):
     result = db.table("approval_requests").select("*").eq("id", approval_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Approval request not found")
@@ -44,6 +50,7 @@ def submit_decision(
     approval_id: int,
     body: ApprovalDecision,
     db: Client = Depends(get_admin),
+    _user: dict = Depends(require_auth),   # Bug #5 fixed: JWT guard
 ):
     """Submit human approve/reject decision."""
     if body.decision not in ("approved", "rejected"):

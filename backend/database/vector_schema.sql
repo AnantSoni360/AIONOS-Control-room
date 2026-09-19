@@ -17,16 +17,17 @@ CREATE TABLE IF NOT EXISTS sop_chunks (
     source_file VARCHAR(200) NOT NULL,   -- e.g. finance_sop.txt
     chunk_index INTEGER      NOT NULL,   -- position within the source doc
     chunk_text  TEXT         NOT NULL,   -- the raw text chunk
-    embedding   vector(3072)  NOT NULL,   -- Google gemini-embedding-2 (3072-dim)
+    embedding   vector(768)   NOT NULL,   -- Google text-embedding-004 (768-dim)
     created_at  TIMESTAMPTZ  DEFAULT NOW()
 );
 
--- HNSW index for fast approximate nearest-neighbor search
--- ef_construction=128, m=16 are good defaults for < 10k vectors
+-- IVFFlat index for fast approximate nearest-neighbor search
+-- NOTE: HNSW has a hard 2000-dim limit; IVFFlat supports any dimension.
+-- lists=100 is a good default for datasets < 1M vectors.
 CREATE INDEX IF NOT EXISTS sop_chunks_embedding_idx
     ON sop_chunks
-    USING hnsw (embedding vector_cosine_ops)
-    WITH (m = 16, ef_construction = 128);
+    USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100);
 
 -- Composite index for department-filtered retrieval
 CREATE INDEX IF NOT EXISTS sop_chunks_department_idx
@@ -39,7 +40,7 @@ ALTER TABLE sop_chunks DISABLE ROW LEVEL SECURITY;
 -- Similarity search function (called from Python)
 -- ---------------------------------------------
 CREATE OR REPLACE FUNCTION match_sop_chunks(
-    query_embedding  vector(3072),
+    query_embedding  vector(768),
     filter_dept      VARCHAR(50),
     match_count      INTEGER DEFAULT 3
 )

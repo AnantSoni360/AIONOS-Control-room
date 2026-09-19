@@ -240,7 +240,7 @@ function renderDashboardContent() {
       return;
     }
     sh.innerHTML = res.history.map(h => `
-      <div style="padding: 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'" onclick="window.navigate('observatory');setTimeout(()=>window.viewSupervisorTree('${h.run_id}'),100)">
+      <div style="padding: 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'" onclick="window.navigate('observatory');setTimeout(()=>window.showOrchTree('${h.run_id}'),100)">
         <div>
           <div style="font-family: var(--font-heading); font-weight: 600; font-size: 0.95rem; color: #0f172a; margin-bottom: 4px;">Run ${h.run_id.slice(0,8)} <span style="font-weight: 400; color: #64748b; font-size: 0.8rem; margin-left: 8px;">Alert #${h.alert_id}</span></div>
           <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 12px;">
@@ -264,8 +264,8 @@ function renderAlerts() {
         <p>▶ Run Agent — autonomous resolution · 🔀 Orchestrate — multi-agent for Critical alerts</p>
       </div>
 
-      <!-- LLM Provider Toggle -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 16px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-lg)">
+      <!-- LLM Provider Toggle & API Limits -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 16px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-lg);flex-wrap:wrap">
         <span style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);white-space:nowrap">🤖 LLM Provider</span>
         <div style="display:flex;gap:6px;background:var(--bg-input);border:1px solid var(--border);border-radius:100px;padding:3px">
           <button id="provider-mistral" onclick="window.setProvider('mistral')"
@@ -279,9 +279,14 @@ function renderAlerts() {
         </div>
         <span style="font-size:0.73rem;color:var(--text-muted)">
           ${state.selectedProvider === "groq"
-            ? "<span style='color:#f97316;font-weight:600'>Groq (llama-3.3-70b-versatile)</span> — ultra-fast inference"
-            : "<span style='color:#6366f1;font-weight:600'>Mistral (mistral-large-latest)</span> — default provider"}
+            ? "<span style='color:#f97316;font-weight:600'>Groq</span>"
+            : "<span style='color:#6366f1;font-weight:600'>Mistral</span>"}
         </span>
+        
+        <!-- API Limit Tracker -->
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px" id="api-limit-tracker">
+          <div style="font-size:0.73rem;color:var(--text-muted)">Checking API limits...</div>
+        </div>
       </div>
 
       <div class="flex gap-3 items-center" style="margin-bottom:16px;flex-wrap:wrap">
@@ -320,11 +325,43 @@ async function loadAlerts() {
     state.alerts = res.alerts || [];
     state.alertTotal = res.total || 0;
     renderAlertsGrid();
+    
+    // Fetch API limits
+    const limits = await api.getLimits().catch(() => null);
+    if (limits) window.renderApiLimits(limits);
   } catch (e) {
     const tb = $("alerts-grid");
     if (tb) tb.innerHTML = `<div style="color:var(--critical);padding:20px;grid-column:1/-1">Error: ${e.message}</div>`;
   }
 }
+
+window.renderApiLimits = function(limits) {
+  const tracker = $("api-limit-tracker");
+  if (!tracker) return;
+  const currentProvider = state.selectedProvider || "mistral";
+  const limitData = limits[currentProvider];
+  if (!limitData) return;
+
+  const isReached = limitData.status === "reached";
+  const isError = limitData.status === "error";
+  const isMissing = limitData.status === "missing";
+
+  let statusHtml = "";
+  if (isReached) {
+    statusHtml = `<span style="color:#ef4444;font-weight:700;display:flex;align-items:center;gap:4px">⚠️ API Limit Reached (429)</span>`;
+  } else if (isMissing) {
+    statusHtml = `<span style="color:#f97316;font-weight:600">No API Key Configured</span>`;
+  } else if (isError) {
+    statusHtml = `<span style="color:#ef4444;font-weight:600">API Error</span>`;
+  } else {
+    statusHtml = `<span style="color:#10b981;font-weight:600;display:flex;align-items:center;gap:4px">✓ Quota Available</span>`;
+  }
+
+  tracker.innerHTML = `
+    <div style="font-size:0.75rem;color:var(--text-secondary);margin-right:8px"><strong>${limitData.provider}</strong> limit status:</div>
+    ${statusHtml}
+  `;
+};
 
 function renderAlertsGrid() {
   const tb = $("alerts-grid"), cnt = $("alert-count");
@@ -396,7 +433,7 @@ window.setProvider = function(provider) {
   state.selectedProvider = provider;
   // Re-render the alerts page so the toggle reflects immediately
   if (state.page === "alerts") renderAlerts();
-  toast(`LLM provider switched to ${ provider === "groq" ? "⚡ Groq (llama-3.3-70b)" : "✦ Mistral (mistral-large)"}`, "info");
+  toast(`LLM provider switched to ${ provider === "groq" ? "⚡ Groq (gpt-oss-120b)" : "✦ Mistral (open-mistral-7b)"}`, "info");
 };
 
 // ── Department Agent Streaming ────────────────────────────────────────────────
@@ -785,8 +822,8 @@ function renderAudit() {
         <button class="btn btn-ghost btn-sm" onclick="window.loadAuditLogs()">↻ Refresh</button>
       </div>
       <div class="table-wrapper">
-        <table><thead><tr><th>Time</th><th>Agent</th><th>Action</th><th>Details</th><th>Alert</th><th>Type</th></tr></thead>
-        <tbody id="audit-tbody"><tr><td colspan="6"><div class="flex items-center gap-3" style="padding:24px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div></td></tr></tbody>
+        <table><thead><tr><th>Time</th><th>Agent</th><th>Action</th><th>Details</th><th>Alert</th><th>Run ID</th><th>Type</th></tr></thead>
+        <tbody id="audit-tbody"><tr><td colspan="7"><div class="flex items-center gap-3" style="padding:24px;color:var(--text-muted)"><div class="spinner"></div>Loading…</div></td></tr></tbody>
         </table></div>
     </div>`;
   loadAuditLogs();
@@ -802,17 +839,19 @@ async function loadAuditLogs() {
     state.auditLogs = res.logs || [];
     const tb = $("audit-tbody"); if (!tb) return;
     if (!state.auditLogs.length) {
-      tb.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><p>No entries found</p></div></td></tr>`;
+      tb.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div><p>No entries found</p></div></td></tr>`;
       return;
     }
     tb.innerHTML = state.auditLogs.map(l => {
       const isSup = l.agent_name === "SupervisorAgent";
+      const runIdShort = l.run_id ? l.run_id.slice(0, 8) + '…' : '—';
       return `<tr>
         <td style="white-space:nowrap;color:var(--text-secondary);font-size:0.78rem">${timeAgo(l.timestamp)}</td>
         <td style="font-size:0.82rem;font-weight:500">${isSup?"🔀 ":""}${l.agent_name||"—"}</td>
         <td><span class="tag">${l.action}</span></td>
-        <td style="max-width:320px;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").slice(0,100)}</td>
+        <td style="max-width:280px;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(l.details||"—").slice(0,100)}</td>
         <td>${l.alert_id?`<button class="btn btn-ghost btn-sm" onclick="window.openAlertDrawer(${l.alert_id})">#${l.alert_id}</button>`:"—"}</td>
+        <td><span style="font-family:monospace;font-size:0.72rem;color:var(--text-muted)">${runIdShort}</span></td>
         <td><span class="badge ${isSup?"":"badge-"+(l.is_human_action?"medium":"low")}" style="${isSup?"background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);":""}font-size:0.7rem">
           ${isSup?"🔀 Supervisor":l.is_human_action?"👤 Human":"🤖 Agent"}
         </span></td>
@@ -901,9 +940,13 @@ async function refreshObservatory() {
                 <span style="font-size:1rem">🔀</span>
                 <div class="obs-title">Alert #${h.alert_id}</div>
               </div>
-              <span style="font-size:0.72rem;color:var(--text-muted)">${timeAgo(h.timestamp)}</span>
+              <span style="font-size:0.72rem;color:var(--text-muted)">${timeAgo(h.created_at)}</span>
             </div>
-            <div class="obs-subtitle" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${h.details||"—"}</div>
+            <div class="obs-subtitle">
+              ${h.total_steps} sub-agent delegation${h.total_steps !== 1 ? 's' : ''}
+              · ${h.duration_ms > 0 ? (h.duration_ms / 1000).toFixed(1) + 's' : 'in progress'}
+            </div>
+            <div style="font-family:monospace;font-size:0.68rem;color:var(--text-muted);margin-top:6px">${(h.run_id||'').slice(0,16)}…</div>
             <div class="flex justify-between items-center mt-4 pt-3" style="border-top:1px solid var(--border-light)">
                <span class="badge" style="background:rgba(139,92,246,0.1);color:#8b5cf6;font-size:0.65rem">SupervisorAgent</span>
                <button class="btn btn-ghost btn-sm" onclick="window.showOrchTree('${h.run_id}')">View Tree</button>
