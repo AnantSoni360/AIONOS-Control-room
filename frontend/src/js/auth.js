@@ -32,8 +32,7 @@ export function isAuthenticated() {
 
 /** Clear all stored auth data and redirect to login. */
 export function logout() {
-  const basePath = window.location.pathname.startsWith('/ui') ? '/ui' : '';
-  window.location.href = `${basePath}/login.html`;
+  window.location.href = 'login.html';
 }
 
 export async function tryRefresh() {

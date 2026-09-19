@@ -163,7 +163,31 @@ function renderDashboard() {
   $("main-content").innerHTML = `
     <div class="page">
       <div style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: var(--radius-xl); padding: 40px; color: white; margin-bottom: 32px; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(234, 88, 12, 0.2);">
-        <div style="position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%;"></div>
+        <div style="position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+        
+        <!-- Architecture / Flow Button -->
+        <button onclick="window.showArchitectureModal()" style="position:absolute; top:24px; right:84px; background:white; border:none; cursor:pointer; color:#0ea5e9; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.15);" title="View Architecture & Test Cases" onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)';">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M10 6.5h4"></path>
+            <path d="M17 10v4"></path>
+            <path d="M10 17.5h4"></path>
+            <path d="M6.5 10v4"></path>
+          </svg>
+        </button>
+
+        <!-- Logout / Back to Login Button -->
+        <button onclick="window.logout()" style="position:absolute; top:24px; right:24px; background:white; border:none; cursor:pointer; color:#ea580c; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.15);" title="Sign out / Back to Login" onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.15)';">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 2px;">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+
         <div style="position: relative; z-index: 1;">
           <h1 style="font-family: var(--font-display); font-size: 2.5rem; letter-spacing: -0.04em; margin-bottom: 8px;">Operations Control Room</h1>
           <p style="font-size: 1.05rem; opacity: 0.9; max-width: 600px;">Real-time multi-department monitoring powered by AIONOS Agentic AI.</p>
@@ -518,20 +542,20 @@ function openStreamingDrawer(alertId, title, accentColor) {
   const dc = $("drawer-container");
   dc.innerHTML = `
     <div class="drawer-backdrop" onclick="window.closeDrawer()"></div>
-    <div class="drawer">
-      <div class="drawer-header">
+    <div class="drawer" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(24px); border-left: 1px solid rgba(255,255,255,0.4); box-shadow: -10px 0 40px rgba(0,0,0,0.1);">
+      <div class="drawer-header" style="background: linear-gradient(135deg, ${accentColor}15, transparent); border-bottom: 1px solid rgba(255,255,255,0.3); padding: 24px;">
         <div>
-          <div style="font-weight:700;font-size:1rem">${title}</div>
-          <div style="font-size:0.78rem;color:var(--text-secondary)">Alert #${alertId} · streaming live</div>
+          <div style="font-weight:800; font-size:1.2rem; color: #0f172a; letter-spacing: -0.02em;">${title}</div>
+          <div style="font-size:0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 6px; font-weight: 600;">Alert #${alertId} · Live Stream</div>
         </div>
-        <button class="close-btn" onclick="window.closeDrawer()">✕</button>
+        <button class="close-btn" style="background: white; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;" onclick="window.closeDrawer()">✕</button>
       </div>
-      <div style="padding:12px 20px;background:linear-gradient(90deg,${accentColor}1a,transparent);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
-        <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 1s infinite"></div>
-        <div style="font-size:0.8rem;color:var(--text-secondary)" id="stream-status-${alertId}">Initialising…</div>
-        <div style="margin-left:auto;font-size:0.75rem;color:var(--text-muted)" id="stream-timer-${alertId}">0s</div>
+      <div style="padding:16px 24px; background:linear-gradient(90deg,${accentColor}11,transparent); border-bottom:1px solid rgba(255,255,255,0.5); display:flex; align-items:center; gap:12px; box-shadow: inset 0 -2px 10px rgba(0,0,0,0.01);">
+        <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;animation:pulse 1s infinite;box-shadow: 0 0 10px #22c55e;"></div>
+        <div style="font-size:0.85rem;font-weight:600;color:#334155;" id="stream-status-${alertId}">Initialising connection…</div>
+        <div style="margin-left:auto;font-size:0.8rem;color:var(--text-muted);font-family:'Fira Code', monospace;" id="stream-timer-${alertId}">0s</div>
       </div>
-      <div class="drawer-body" style="padding:12px 16px" id="stream-steps-${alertId}"></div>
+      <div class="drawer-body" style="padding:24px" id="stream-steps-${alertId}"></div>
       <div id="stream-footer-${alertId}"></div>
     </div>`;
 
@@ -568,30 +592,38 @@ function appendStreamStep(alertId, event, startTime) {
   }
 
   const step = document.createElement("div");
-  step.style.cssText = `border-left:2px solid ${meta.color};padding:8px 12px;margin-bottom:6px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:rgba(255,255,255,0.02);animation:slideIn 0.2s ease`;
+  step.style.cssText = `position: relative; padding-left: 28px; margin-bottom: 20px; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;`;
 
   let body = "";
   if (event.type === "thinking") {
-    body = `<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;line-height:1.6">${event.content}</div>`;
+    body = `<div style="font-size:0.9rem;color:#475569;line-height:1.6;font-style:italic;">"${event.content}"</div>`;
   } else if (event.type === "tool_call") {
     const args = JSON.stringify(event.args||{}, null, 2);
-    body = `<div style="font-size:0.78rem;font-family:monospace;color:#f97316;margin-top:4px">${event.name}()</div>
-      ${args!=="{}"?`<details style="margin-top:4px"><summary style="font-size:0.72rem;color:var(--text-muted);cursor:pointer">args</summary>
-        <pre style="font-size:0.72rem;color:var(--text-secondary);white-space:pre-wrap;margin-top:4px;background:var(--bg-glass);padding:6px 8px;border-radius:4px">${args}</pre>
+    body = `<div style="font-size:0.85rem;font-family:'Fira Code', monospace;color:#ea580c;font-weight:700;">⚡ ${event.name}()</div>
+      ${args!=="{}"?`<details style="margin-top:10px"><summary style="font-size:0.75rem;color:#64748b;cursor:pointer;user-select:none;font-weight:700;letter-spacing:0.05em;">VIEW PAYLOAD</summary>
+        <pre style="font-size:0.8rem;color:#e2e8f0;background:#0f172a;padding:12px;border-radius:8px;margin-top:8px;overflow-x:auto;box-shadow:inset 0 2px 10px rgba(0,0,0,0.5);">${args}</pre>
       </details>`:""}`;
   } else if (event.type === "tool_result") {
-    body = `<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:4px;font-family:monospace;background:var(--bg-glass);padding:6px 8px;border-radius:4px;white-space:pre-wrap">${(event.content||"").slice(0,400)}</div>`;
+    body = `<div style="font-size:0.8rem;color:#cbd5e1;background:#1e293b;padding:12px;border-radius:8px;font-family:'Fira Code', monospace;white-space:pre-wrap;box-shadow:inset 0 2px 10px rgba(0,0,0,0.5);">${(event.content||"").slice(0,400)}</div>`;
   } else if (event.type === "rag_ready") {
-    body = `<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px">${event.chunks} policy sections retrieved</div>`;
+    body = `<div style="font-size:0.85rem;color:#334155;margin-top:2px"><strong style="color:#22c55e">${event.chunks}</strong> policy sections successfully retrieved.</div>`;
   } else if (event.type === "supervisor_start") {
-    body = `<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px">Multi-agent orchestration started for Alert #${event.alert_id}</div>`;
+    body = `<div style="font-size:0.85rem;color:#334155;margin-top:2px">Multi-agent orchestration workflow started for Alert #${event.alert_id}</div>`;
   }
 
-  step.innerHTML = `<div style="display:flex;align-items:center;gap:6px">
-    <span style="font-size:0.85rem">${meta.icon}</span>
-    <span style="font-size:0.75rem;font-weight:600;color:${meta.color};text-transform:uppercase;letter-spacing:.06em">${meta.label}</span>
-    ${event.step?`<span style="font-size:0.68rem;color:var(--text-muted);margin-left:auto">step ${event.step}</span>`:""}
-  </div>${body}`;
+  step.innerHTML = `
+    <div style="position: absolute; left: 0; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: ${meta.color}; box-shadow: 0 0 0 4px ${meta.color}33;"></div>
+    <div style="position: absolute; left: 6px; top: 22px; bottom: -24px; width: 2px; background: linear-gradient(to bottom, ${meta.color}44, transparent); z-index: -1;"></div>
+    
+    <div style="display:flex;align-items:center;gap:8px; margin-bottom: 8px;">
+      <span style="font-size:0.75rem;font-weight:800;color:${meta.color};text-transform:uppercase;letter-spacing:.1em;">${meta.icon} ${meta.label}</span>
+      ${event.step?`<span style="font-size:0.7rem;color:var(--text-muted);background:white;padding:2px 8px;border-radius:100px;border:1px solid var(--border);margin-left:auto;box-shadow:0 1px 3px rgba(0,0,0,0.05);">Step ${event.step}</span>`:""}
+    </div>
+    
+    <div style="background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-radius: 12px; padding: 16px; backdrop-filter: blur(12px);">
+      ${body}
+    </div>
+  `;
   container.appendChild(step);
   container.scrollTop = container.scrollHeight;
 }
@@ -603,16 +635,20 @@ function finalizeStreamDrawer(alertId, event, startTime) {
   const dur = Math.floor((Date.now()-startTime)/1000);
   const col = event.final_status==="Resolved"?"#22c55e":event.final_status==="Pending_Approval"?"#f97316":"#6366f1";
   if (footer) footer.innerHTML = `
-    <div style="padding:16px 20px;border-top:1px solid var(--border);background:rgba(34,197,94,0.04)">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
-        <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#22c55e">✓ Completed</span>
-        <span style="font-size:0.75rem;color:var(--text-muted)">${event.steps} steps · ${dur}s</span>
-        ${event.final_status?`<span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44;font-size:0.72rem">${event.final_status}</span>`:""}
-        ${event.run_id?`<span style="font-size:0.68rem;color:var(--text-muted);font-family:monospace">Run: ${event.run_id.slice(0,8)}…</span>`:""}
+    <div style="padding:24px; border-top:1px solid rgba(255,255,255,0.4); background: linear-gradient(0deg, rgba(34,197,94,0.08) 0%, transparent 100%);">
+      <div style="background: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.8);">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <span style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#22c55e;display:flex;align-items:center;gap:6px;"><span style="font-size:1.2rem; filter: drop-shadow(0 0 4px #22c55e);">✅</span> Success</span>
+          <span style="font-size:0.75rem;color:var(--text-secondary);background:#f1f5f9;padding:4px 10px;border-radius:100px;font-weight:600;">${event.steps} steps · ${dur}s</span>
+          ${event.final_status?`<span style="background:${col}15;color:${col};border:1px solid ${col}33;font-size:0.75rem;padding:4px 10px;border-radius:100px;font-weight:700;">${event.final_status}</span>`:""}
+        </div>
+        ${event.final_message?`<div style="font-size:0.9rem;color:#334155;line-height:1.6;margin-bottom:16px;padding:12px 16px;border-left:4px solid ${col};background:#f8fafc;border-radius:0 8px 8px 0;">${event.final_message}</div>`:""}
+        
+        <div style="display:flex;gap:12px;">
+          ${event.run_id?`<button class="btn btn-sm" style="flex:1;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;border:none;box-shadow:0 4px 15px rgba(124,58,237,0.3);font-weight:600;" onclick="window.showOrchTree('${event.run_id}')">🔀 View Delegation Tree</button>`:""}
+          <button class="btn btn-ghost btn-sm" style="background:#f1f5f9;border:1px solid #e2e8f0;font-weight:600;" onclick="window.closeDrawer()">Close Drawer</button>
+        </div>
       </div>
-      ${event.final_message?`<div style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6;background:var(--bg-glass);padding:10px 12px;border-radius:var(--radius-sm)">${event.final_message}</div>`:""}
-      ${event.run_id?`<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="window.showOrchTree('${event.run_id}')">🔀 View Delegation Tree</button>`:""}
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px;margin-left:8px" onclick="window.closeDrawer()">Close</button>
     </div>`;
   // Cleanup stream tracking
   delete state.activeStreams[alertId];
@@ -628,14 +664,27 @@ window.closeDrawer = function() {
 window.showOrchTree = async function(runId) {
   const dc = $("drawer-container");
   dc.innerHTML = `
-    <div class="drawer-backdrop" onclick="window.closeDrawer()"></div>
-    <div class="drawer">
-      <div class="drawer-header">
-        <div><div style="font-weight:700;font-size:1rem">🔀 Delegation Tree</div>
-        <div style="font-size:0.72rem;font-family:monospace;color:var(--text-muted)">${runId}</div></div>
-        <button class="close-btn" onclick="window.closeDrawer()">✕</button>
+    <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; z-index:99999; background:rgba(15,23,42,0.6); backdrop-filter:blur(8px);" onclick="window.closeDrawer()">
+      <div style="background:rgba(255,255,255,0.95); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.8); border-radius:24px; padding:0; max-width:640px; width:95%; max-height:90vh; overflow-y:auto; box-shadow:0 30px 60px rgba(0,0,0,0.3); position:relative; animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1)" onclick="event.stopPropagation()">
+        
+        <!-- Premium Header -->
+        <div style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); padding: 32px 40px; color: white; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -50%; right: -10%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+          <button onclick="window.closeDrawer()" style="position:absolute;top:24px;right:24px;background:rgba(255,255,255,0.2);border:none;cursor:pointer;font-size:1.4rem;color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px); transition: background 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
+          
+          <div style="font-weight:800; font-size:2rem; letter-spacing:-0.03em; margin-bottom:12px; display:flex; align-items:center; gap:16px; position:relative; z-index:1;">
+            <div style="background:white; color:#7c3aed; width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; box-shadow:0 8px 20px rgba(0,0,0,0.2);">🔀</div>
+            Delegation Tree
+          </div>
+          <div style="font-size:0.9rem; opacity:0.9; font-family: 'Fira Code', monospace; position:relative; z-index:1; display:flex; align-items:center; gap:8px;">
+            <span style="opacity:0.7;">RUN ID:</span> <span style="background:rgba(0,0,0,0.2); padding:4px 10px; border-radius:6px; letter-spacing:0.05em;">${runId}</span>
+          </div>
+        </div>
+
+        <div class="drawer-body" id="tree-body" style="padding: 40px; background: #f8fafc;">
+          <div class="flex items-center justify-center gap-3" style="color:#64748b;padding:40px 0;"><div class="spinner"></div>Building orchestration map…</div>
+        </div>
       </div>
-      <div class="drawer-body" id="tree-body"><div class="flex items-center gap-3" style="color:var(--text-muted);padding:20px 0"><div class="spinner"></div>Loading tree…</div></div>
     </div>`;
 
   try {
@@ -643,40 +692,81 @@ window.showOrchTree = async function(runId) {
     const body = $("tree-body"); if (!body) return;
 
     const tasks = tree.tasks || [];
-    const statusIcon = { done:"✅", running:"🔄", failed:"❌", pending:"⏳" };
+    const deptColors = { Finance:"#8b5cf6", HR:"#ec4899", Sales:"#10b981", Operations:"#ea580c" };
     const deptIcon   = { Finance:"💰", HR:"👥", Sales:"📈", Operations:"⚙️" };
+    
+    // Convert status to glowing badge
+    const getStatusBadge = (s) => {
+      if (s === "done") return `<span style="background:#22c55e15; color:#22c55e; border:1px solid #22c55e44; padding:2px 8px; border-radius:100px; font-weight:700; font-size:0.7rem; text-transform:uppercase;">✓ Complete</span>`;
+      if (s === "failed") return `<span style="background:#ef444415; color:#ef4444; border:1px solid #ef444444; padding:2px 8px; border-radius:100px; font-weight:700; font-size:0.7rem; text-transform:uppercase;">❌ Failed</span>`;
+      return `<span style="background:#f9731615; color:#f97316; border:1px solid #f9731644; padding:2px 8px; border-radius:100px; font-weight:700; font-size:0.7rem; text-transform:uppercase;">🔄 ${s}</span>`;
+    };
 
     body.innerHTML = `
-      <div style="margin-bottom:20px">
-        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:8px">Orchestration Tree</div>
-        <div style="background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-family:monospace;font-size:0.82rem">
-          <div style="color:#8b5cf6;margin-bottom:8px">🔀 SupervisorAgent (${runId.slice(0,8)}…)</div>
-          ${tasks.length === 0
-            ? `<div style="color:var(--text-muted);padding-left:20px">No sub-agents delegated</div>`
-            : tasks.map((t, i) => {
-                const isLast = i === tasks.length - 1;
-                const icon = statusIcon[t.status] || "·";
-                const dicon = deptIcon[t.child_dept] || "·";
-                return `<div style="padding-left:20px;color:var(--text-secondary);margin-bottom:6px">
-                  ${isLast ? "└──" : "├──"} ${icon} ${dicon} ${t.child_dept}Agent
-                  <span style="color:var(--text-muted);font-size:0.72rem;margin-left:8px">
-                    Alert #${t.alert_id} · ${t.status}
-                    ${t.child_run_id ? `· ${t.child_run_id.slice(0,8)}…` : ""}
-                  </span>
-                  ${t.result_summary ? `<div style="padding-left:40px;color:var(--text-muted);font-size:0.72rem;white-space:pre-wrap;margin-top:2px">${t.result_summary.slice(0,120)}…</div>` : ""}
-                </div>`;
-              }).join("")}
+      <div style="position:relative;">
+        <!-- Glowing Vertical Connection Line -->
+        <div style="position:absolute; left: 24px; top: 20px; bottom: 40px; width: 4px; background: linear-gradient(to bottom, #7c3aed, #cbd5e1); border-radius: 10px; box-shadow: 0 0 15px rgba(124,58,237,0.3);"></div>
+        
+        <!-- Supervisor Node -->
+        <div style="position:relative; padding-left: 64px; margin-bottom: 32px;">
+          <div style="position:absolute; left: 16px; top: 16px; width: 20px; height: 20px; border-radius: 50%; background: #7c3aed; box-shadow: 0 0 0 6px rgba(124,58,237,0.2); z-index: 2;"></div>
+          <div style="background: white; border: 1px solid #e2e8f0; padding: 24px; border-radius: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.04);">
+            <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #7c3aed; letter-spacing: 0.1em; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
+              <span style="font-size:1.2rem;">🧠</span> Supervisor Agent
+            </div>
+            <div style="font-size: 1rem; color: #334155; font-weight: 500; line-height: 1.5;">Orchestration initialized. Delegating required sub-tasks across specialized departments.</div>
+          </div>
         </div>
+
+        <!-- Delegated Tasks -->
+        ${tasks.length === 0
+          ? `<div style="padding-left: 64px; color: #94a3b8; font-style: italic; font-size: 0.95rem;">No sub-agents delegated during this run.</div>`
+          : tasks.map((t, i) => {
+              const col = deptColors[t.child_dept] || "#3b82f6";
+              const dicon = deptIcon[t.child_dept] || "🤖";
+              return `
+              <div style="position:relative; padding-left: 64px; margin-bottom: 24px; animation: slideUp 0.4s ease-out; animation-fill-mode: both; animation-delay: ${i * 0.1}s;">
+                <div style="position:absolute; left: 16px; top: 20px; width: 20px; height: 20px; border-radius: 50%; background: ${col}; box-shadow: 0 0 0 6px ${col}33; z-index: 2;"></div>
+                <div style="background: white; border: 1px solid ${col}44; padding: 24px; border-radius: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.04); position: relative; overflow: hidden;">
+                  <div style="position:absolute; top:0; left:0; width:6px; height:100%; background:${col};"></div>
+                  
+                  <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                    <div style="display:flex; align-items: center; gap: 12px;">
+                      <div style="width: 44px; height: 44px; border-radius: 12px; background: ${col}15; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">${dicon}</div>
+                      <div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 2px;">${t.child_dept} Agent</div>
+                        <div style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 8px;">
+                          Alert #${t.alert_id} ${getStatusBadge(t.status)}
+                        </div>
+                      </div>
+                    </div>
+                    ${t.child_run_id ? `<div style="font-size: 0.75rem; font-family: 'Fira Code', monospace; color: #64748b; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">Run: ${t.child_run_id.slice(0,8)}</div>` : ""}
+                  </div>
+
+                  ${t.result_summary ? `
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 16px; font-size: 0.9rem; color: #334155; border-left: 3px solid #cbd5e1; line-height: 1.6;">
+                      ${t.result_summary}
+                    </div>
+                  ` : ""}
+                </div>
+              </div>`;
+            }).join("")}
       </div>
 
-      <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:8px">Supervisor Logs</div>
-      <div class="trace-list">
-        ${(tree.supervisor_logs||[]).map(l => `
-          <div class="trace-step">
-            <div class="trace-role" style="color:#8b5cf6">🔀 SupervisorAgent · ${l.action}</div>
-            <div class="trace-content">${(l.details||"").slice(0,400)}</div>
-            <div style="font-size:0.7rem;color:var(--text-muted);margin-top:6px">${timeAgo(l.timestamp)}</div>
-          </div>`).join("") || `<div class="empty-state" style="padding:20px 0"><p>No supervisor logs yet</p></div>`}
+      <div style="margin-top: 48px; border-top: 1px solid #e2e8f0; padding-top: 32px;">
+        <div style="font-size:0.85rem;color:#475569;text-transform:uppercase;letter-spacing:.1em;font-weight:800;margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+          <span style="font-size: 1.3rem;">📋</span> System Raw Logs
+        </div>
+        <div style="background: #0f172a; border-radius: 16px; padding: 24px; max-height: 350px; overflow-y: auto; box-shadow: inset 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #334155;">
+          ${(tree.supervisor_logs||[]).map(l => `
+            <div style="margin-bottom: 16px; border-bottom: 1px solid #1e293b; padding-bottom: 16px;">
+              <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="color:#a78bfa; font-weight:700; font-size:0.85rem; font-family: 'Fira Code', monospace; background: #1e293b; padding: 4px 10px; border-radius: 6px;">> ${l.action}</div>
+                <div style="font-size:0.75rem; color:#64748b; font-weight:600;">${timeAgo(l.timestamp)}</div>
+              </div>
+              <div style="color:#cbd5e1; font-size:0.85rem; line-height:1.6;">${(l.details||"").slice(0,500)}</div>
+            </div>`).join("") || `<div style="color:#64748b; font-size:0.9rem; font-style:italic;">No raw logs available.</div>`}
+        </div>
       </div>`;
   } catch (e) { toast(`Failed to load tree: ${e.message}`, "error"); }
 };
@@ -1003,5 +1093,84 @@ window.navigate = navigate;
 const style = document.createElement("style");
 style.textContent = `@keyframes slideIn { from { opacity:0;transform:translateY(4px); } to { opacity:1;transform:translateY(0); } }`;
 document.head.appendChild(style);
+
+// ── Architecture & Flow Modal ────────────────────────────────────────────────
+window.showArchitectureModal = function() {
+  const dc = $("drawer-container");
+  dc.innerHTML = `
+    <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; z-index:99999; background:rgba(15,23,42,0.7); backdrop-filter:blur(12px);" onclick="window.closeDrawer()">
+      <div style="background:rgba(255,255,255,0.98); border:1px solid rgba(255,255,255,0.8); border-radius:24px; max-width:800px; width:95%; max-height:90vh; overflow-y:auto; box-shadow:0 30px 60px rgba(0,0,0,0.4); position:relative; animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1)" onclick="event.stopPropagation()">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); padding: 32px 40px; color: white; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -50%; right: -10%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+          <button onclick="window.closeDrawer()" style="position:absolute;top:24px;right:24px;background:rgba(255,255,255,0.2);border:none;cursor:pointer;font-size:1.4rem;color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px); transition: background 0.2s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
+          
+          <div style="font-weight:800; font-size:2rem; letter-spacing:-0.03em; margin-bottom:8px; display:flex; align-items:center; gap:16px; position:relative; z-index:1;">
+            <div style="background:white; color:#2563eb; width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; box-shadow:0 8px 20px rgba(0,0,0,0.2);">🗺️</div>
+            User Flow Architecture
+          </div>
+          <p style="font-size: 1rem; opacity: 0.9; margin: 0; position:relative; z-index:1;">Multi-Agent Orchestration & Testing Flow</p>
+        </div>
+
+        <div style="padding: 40px;">
+          <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">1. System Flow Diagram</h3>
+          
+          <!-- Diagram blocks -->
+          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom: 40px;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; display:flex; align-items:center; gap:16px;">
+              <div style="background:#3b82f6; color:white; font-weight:800; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
+              <div><strong style="color:#0f172a">User Access:</strong> Logs in and views Operations Dashboard</div>
+            </div>
+            <div style="width:2px; height:24px; background:#cbd5e1; margin-left:32px;"></div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; display:flex; align-items:center; gap:16px;">
+              <div style="background:#3b82f6; color:white; font-weight:800; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
+              <div><strong style="color:#0f172a">Alert Queue:</strong> Monitors real-time alerts across 4 departments (Finance, HR, Sales, Operations)</div>
+            </div>
+            <div style="width:2px; height:24px; background:#cbd5e1; margin-left:32px;"></div>
+            
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:24px;">
+              <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:20px; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                  <div style="background:#3b82f6; color:white; font-weight:800; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3A</div>
+                  <strong style="color:#1d4ed8; font-size:1.1rem;">Single Agent Path</strong>
+                </div>
+                <p style="font-size:0.9rem; color:#475569; margin:0; line-height:1.5;">Standard alerts are processed by a department-specific agent. It fetches RAG policy, calls tools, and resolves autonomously.</p>
+              </div>
+              
+              <div style="background:#faf5ff; border:1px solid #e9d5ff; border-radius:12px; padding:20px; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                  <div style="background:#a855f7; color:white; font-weight:800; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3B</div>
+                  <strong style="color:#7e22ce; font-size:1.1rem;">Supervisor Orchestration</strong>
+                </div>
+                <p style="font-size:0.9rem; color:#475569; margin:0; line-height:1.5;">Critical alerts are intercepted by the Supervisor. It breaks the alert down and delegates sub-tasks to multiple department agents simultaneously.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">2. Demonstration Test Cases</h3>
+          
+          <div style="display:grid; gap:16px;">
+            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:20px; border-left:4px solid #3b82f6; background:white; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 10px 25px rgba(0,0,0,0.05)'" onmouseout="this.style.boxShadow='none'">
+              <h4 style="margin:0 0 8px 0; font-size:1.05rem; color:#0f172a; display:flex; align-items:center; gap:8px;"><span>▶</span> Test Case 1: Standard Issue Resolution</h4>
+              <p style="margin:0; font-size:0.9rem; color:#64748b; line-height:1.5;"><strong>Action:</strong> Click "▶ Run Agent" on any Medium/High alert.<br><strong>Expected:</strong> The live streaming drawer opens. The agent dynamically fetches SOP guidelines (RAG), plans a solution, executes tool calls, and resolves the issue.</p>
+            </div>
+            
+            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:20px; border-left:4px solid #8b5cf6; background:white; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 10px 25px rgba(0,0,0,0.05)'" onmouseout="this.style.boxShadow='none'">
+              <h4 style="margin:0 0 8px 0; font-size:1.05rem; color:#0f172a; display:flex; align-items:center; gap:8px;"><span>🔀</span> Test Case 2: Multi-Department Orchestration</h4>
+              <p style="margin:0; font-size:0.9rem; color:#64748b; line-height:1.5;"><strong>Action:</strong> Click "🔀 Orchestrate" on a Critical alert.<br><strong>Expected:</strong> The Supervisor takes control, delegates tasks to sub-agents (e.g., HR + Finance). After completion, clicking "View Delegation Tree" renders a visual map of the entire operation and raw system logs.</p>
+            </div>
+
+            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:20px; border-left:4px solid #10b981; background:white; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 10px 25px rgba(0,0,0,0.05)'" onmouseout="this.style.boxShadow='none'">
+              <h4 style="margin:0 0 8px 0; font-size:1.05rem; color:#0f172a; display:flex; align-items:center; gap:8px;"><span>🤖</span> Test Case 3: LLM Provider Hot-Swapping</h4>
+              <p style="margin:0; font-size:0.9rem; color:#64748b; line-height:1.5;"><strong>Action:</strong> Toggle between Mistral and Groq on the Alerts page.<br><strong>Expected:</strong> The API Limit Tracker updates instantly. Subsequent agent runs explicitly use the newly selected LLM brain for reasoning, demonstrating multi-provider reliability.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+};
 
 boot();
