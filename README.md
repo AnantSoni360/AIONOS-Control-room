@@ -1,6 +1,6 @@
 # 💠 AIONOS Operations Control Room — Agentic AI Factory
 
-![AIONOS Banner](docs/screenshots/banner.png) *(Note: Please add a wide screenshot of the Dashboard here)*
+![Operations Control Room Dashboard](screenshots/Screenshot%202026-09-19%20113144.png)
 
 AIONOS is a **state-of-the-art Multi-Agent Operations Control Room**. It serves as a central hub where specialized AI Agents (Finance, HR, Sales, Operations) autonomously monitor, route, and resolve incoming enterprise alerts in real-time. 
 
@@ -19,14 +19,23 @@ Traditional automation relies on hardcoded `if/else` rules. The **AIONOS Agentic
 
 ---
 
-## 📸 Recommended Screenshots to Add
+## 📸 Platform Showcase
 
-To make this repository stand out, take the following screenshots of your live app and place them in a `docs/screenshots/` folder (you will need to update the image links in this README once you take them!):
+### 1. Operations Control Room (Dashboard)
+The central nerve center offering a real-time, global view of departmental KPIs, agent statuses, and multi-agent orchestration history.
+![Operations Control Room Dashboard](screenshots/Screenshot%202026-09-19%20113144.png)
 
-1. **`dashboard.png`**: The main Dashboard showing the KPI Grid and Orchestration History. *(Place at the top of this README)*
-2. **`live_agent.png`**: A screenshot of the right-side drawer open, showing the step-by-step live streaming of an Agent thinking and calling tools.
-3. **`orchestration_tree.png`**: A screenshot of the Orchestration Tree viewer showing the Supervisor delegating tasks to sub-agents.
-4. **`login_glassmorphism.png`**: A screenshot of your beautiful, glassmorphic Light Mode login screen.
+### 2. Alerts Queue & LLM Hot-Swapping
+Agents can seamlessly transition between LLM providers (Mistral and Groq) with built-in API quota tracking. Critical alerts can be escalated to the Orchestrator, while standard alerts are processed autonomously.
+![Alerts Queue](screenshots/Screenshot%202026-09-19%20113151.png)
+
+### 3. Human-in-the-Loop (Approvals Queue)
+When an agent encounters a high-risk or cross-departmental issue, it halts and requests human intervention. Managers can explicitly review the agent's findings and authorize actions.
+![Approvals Queue](screenshots/Screenshot%202026-09-19%20113203.png)
+
+### 4. Immutable Audit Logs
+For absolute enterprise compliance, every single action—whether an AI tool execution, an orchestration completion, or a human approval—is immutably recorded in the global Audit Log.
+![Audit Log](screenshots/Screenshot%202026-09-19%20113216.png)
 
 ---
 
