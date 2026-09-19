@@ -90,6 +90,18 @@ function toast(msg, type="info") {
   c.appendChild(el); setTimeout(() => el.remove(), 4000);
 }
 
+window.showInfoModal = function(title, text) {
+  const dc = document.getElementById("drawer-container");
+  dc.innerHTML = `
+    <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; z-index:99999; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);" onclick="window.closeDrawer()">
+      <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:16px; padding:24px; max-width:400px; width:90%; box-shadow:0 25px 50px rgba(0,0,0,0.2); position:relative;" onclick="event.stopPropagation()">
+        <button onclick="window.closeDrawer()" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--text-muted);">&times;</button>
+        <div style="font-family:var(--font-heading);font-size:1.2rem;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><span style="color:#6366f1;font-size:1.4rem;">ℹ️</span> ${title}</div>
+        <div style="font-size:0.95rem;color:var(--text-secondary);line-height:1.6;">${text}</div>
+      </div>
+    </div>`;
+};
+
 // ── App Shell ─────────────────────────────────────────────────────────────────
 function renderApp() {
   document.querySelector("#app").innerHTML = `
@@ -190,12 +202,16 @@ function renderDashboardContent() {
 
     <!-- KPI Grid -->
     <h2 style="font-family: var(--font-heading); font-size: 1.4rem; color: #0f172a; margin-bottom: 16px;">Department Overview</h2>
+    
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 32px;">
       ${depts.map(d => {
         const ds = s[d]||{}, col = deptColors[d];
         return `
         <div class="card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;" onclick="window.navigate('alerts');window.setDeptFilter('${d}')" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 32px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-card)'">
           <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${col};"></div>
+          
+          <button onclick="event.preventDefault(); event.stopPropagation(); window.showInfoModal('${d} Department', 'The ${d} AI Agent automatically monitors and resolves alerts belonging to this department. Click anywhere on this card to view the specific queue.')" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; font-size:1.2rem; color:#94a3b8; z-index:10; padding:4px;" onmouseover="this.style.color='${col}'" onmouseout="this.style.color='#94a3b8'">ℹ️</button>
+
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
             <div style="width: 48px; height: 48px; border-radius: 12px; background: ${col}15; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">${deptIcons[d]}</div>
             <div>
@@ -248,7 +264,10 @@ function renderDashboardContent() {
             <span><strong style="color: #475569;">Duration:</strong> ${(h.duration_ms/1000).toFixed(1)}s</span>
           </div>
         </div>
-        <div style="font-size: 0.8rem; color: #94a3b8;">${new Date(h.created_at).toLocaleString()}</div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="font-size: 0.8rem; color: #94a3b8;">${new Date(h.created_at).toLocaleString()}</div>
+          <button onclick="event.preventDefault(); event.stopPropagation(); window.showInfoModal('Orchestration Run ${h.run_id.slice(0,8)}', 'This tracks a multi-agent workflow where the Supervisor AI broke down Alert #${h.alert_id} into sub-tasks and delegated them to other department agents. Click the card to view the full delegation tree.')" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:#94a3b8; padding:4px;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='#94a3b8'">ℹ️</button>
+        </div>
       </div>`).join("");
   }).catch(() => {
     const sh = $("supervisor-history"); if(sh) sh.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;font-size:0.85rem">Failed to load history</div>';
